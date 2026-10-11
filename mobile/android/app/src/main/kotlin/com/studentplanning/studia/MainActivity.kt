@@ -6,6 +6,8 @@ import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.media.AudioAttributes
+import android.net.Uri
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -192,20 +194,31 @@ internal object LocalAlarmStore {
 class StudyAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (!allowed(context)) return
-        val channel = intent.getStringExtra("channel") ?: "revisions"
+        val isCourse = intent.getStringExtra("channel") == "courses"
+        // Channel sound is immutable after creation on Android 8+. New IDs are
+        // required for existing installations that already created silent/default
+        // "courses" and "revisions" channels. Users may still mute these channels.
+        val channelId = if (isCourse) "courses_studia_v2" else "revisions_studia_v2"
+        val soundName = if (isCourse) "studia_course" else "studia_revision"
+        val sound = Uri.parse("android.resource://${context.packageName}/raw/$soundName")
+        val attributes = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= 26) {
-            manager.createNotificationChannel(NotificationChannel(channel,
-                if (channel == "courses") "Rappels des cours" else "Séances de révision",
-                NotificationManager.IMPORTANCE_DEFAULT))
+            val channel = NotificationChannel(channelId,
+                if (isCourse) "Cours · son Studia" else "Révisions · son Studia",
+                NotificationManager.IMPORTANCE_DEFAULT)
+            channel.setSound(sound, attributes)
+            manager.createNotificationChannel(channel)
         }
         val open = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(context, channel)
-                      else Notification.Builder(context)
+        val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(context, channelId)
+                      else Notification.Builder(context).setSound(sound, attributes)
         val notification = builder.setContentTitle(intent.getStringExtra("title"))
             .setContentText(intent.getStringExtra("body"))
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_launcher_monochrome)
             .setAutoCancel(true).setContentIntent(open).build()
         manager.notify(intent.getIntExtra("id", 0), notification)
     }
