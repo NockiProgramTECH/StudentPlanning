@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/schedule.dart';
 
 /// Android emulator: 10.0.2.2. For a physical phone pass your computer LAN IP.
-const apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:8000');
+const apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://192.168.1.67:8000');
 
 class ImportResponse {
   final Schedule schedule;
