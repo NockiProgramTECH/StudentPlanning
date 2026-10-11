@@ -1166,3 +1166,25 @@ p {
     margin-top: 8px;
   }
 }
+
+/* Visual conventions supplied by the school; these are demo data, not parsed from a PDF. */
+.stripe.red {
+  background: #d85151;
+}
+.stripe.yellow {
+  background: #d6ae36;
+}
+.course-label {
+  display: inline-block;
+  margin-top: 4px;
+  margin-right: 5px;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.35px;
+}
+.course-label.exam {
+  color: #cf4c4c;
+}
+.course-label.online {
+  color: #947016;
+}

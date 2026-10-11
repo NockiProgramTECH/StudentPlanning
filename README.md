@@ -46,16 +46,22 @@ L'URL `10.0.2.2` fonctionne pour **l'émulateur Android**. Sur téléphone physi
 
 - `POST /api/import` : multipart avec `file` (PDF), `class_name`, `week_start` (lundi ISO `YYYY-MM-DD`) et éventuellement `previous` (planning N-1 validé en JSON). Répond `{schedule, changes_from_previous_week}`. Un PDF scanné, un document ambigu ou une réponse IA invalide ne génèrent pas silencieusement de faux cours.
 - `POST /api/compare` : `{previous: Schedule, current: Schedule}` pour des semaines consécutives de la même classe ; répond `{changes: [...]}`. Les changements sont des **propositions** à confirmer, et la comparaison reste prudente sur les cours répétés.
-- `Schedule` : `{class_name, week_start, courses: [{subject, day, start, end, room, teacher, source_page, needs_review}], warnings}` ; `day` va de 1 (lundi) à 7 (dimanche). Les horaires sont en `HH:mm`.
+- `Schedule` : `{class_name, week_start, courses: [{subject, day, start, end, room, teacher, source_page, kind, delivery_mode, needs_review}], warnings}` ; `day` va de 1 (lundi) à 7 (dimanche). Les horaires sont en `HH:mm`. `kind` vaut `course`, `assessment` ou `unknown` ; `delivery_mode` vaut `online`, `in_person` ou `unknown`.
 
 ```bash
 cd backend
 python -m pytest -q
 ```
 
+### Codes couleur des emplois du temps
+
+D'après la convention décrite par l'utilisateur pour l'année scolaire, **le rouge dans une case peut signaler un devoir** et **le jaune peut signaler un cours en ligne**. Le backend extrait maintenant la couleur du texte et des fonds dessinés à proximité des blocs (`visual_cues` : `red_text`, `red_fill`, `yellow_text`, `yellow_fill`). Ces indices sont transmis **avec le texte et les coordonnées**, jamais le PDF brut, au modèle d'interprétation. Le modèle doit confirmer la classe et le contexte de la case : une couleur de titre ou de légende ne doit pas qualifier tous les cours. En cas de doute, `unknown` et `needs_review` sont préférables à une classification inventée. La revue Flutter permet de modifier le type de séance et la modalité ; les cartes affichent « DEVOIR » en rouge et « EN LIGNE » en jaune. Les maquettes HTML utilisent uniquement des exemples fictifs, sans analyse de PDF.
+
+**Validation indispensable :** la pièce jointe signalée comme `Emploi_temps_12 -17-oct 2026.pdf` n'a pas été montée dans `/home/user/uploads/` malgré deux envois. Les tests actuels utilisent donc un **PDF synthétique** coloré ; ils ne prouvent pas encore que la structure réelle de l'établissement fonctionne. Pour valider la mise en page, fournir le fichier par un chemin réellement accessible dans le dépôt (sans l'ajouter à Git si le document contient des données sensibles), ou des captures des cases et de la légende.
+
 ### Limitations actuelles
 
-La qualité de l'interprétation dépend du PDF réel et du modèle configuré. Aucun PDF d'établissement n'est fourni : la reconstruction des tableaux doit être vérifiée sur des documents représentatifs avant usage réel. L'API ne fait pas d'OCR, la comparaison ne garantit pas que les différences de documents soient de vrais changements, et les corrections manuelles effectuées après import ne recalculent pas les propositions N-1 affichées (un avertissement le signale). Le stockage est local par appareil, sans compte ni synchronisation. La maquette n'implémente pas encore notifications ni traitement différé.
+La qualité de l'interprétation dépend du PDF réel et du modèle configuré. Le document annoncé en pièce jointe n'était pas accessible dans cet environnement : la reconstruction des tableaux doit encore être vérifiée sur un PDF réel de l'établissement. L'API ne fait pas d'OCR, la comparaison ne garantit pas que les différences de documents soient de vrais changements, et les corrections manuelles effectuées après import ne recalculent pas les propositions N-1 affichées (un avertissement le signale). Le stockage est local par appareil, sans compte ni synchronisation. La maquette n'implémente pas encore notifications ni traitement différé.
 
 ## Maquettes interactives HTML / CSS / JavaScript
 

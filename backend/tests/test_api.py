@@ -96,3 +96,9 @@ def test_distant_course_with_same_subject_is_uncertain_not_added_and_removed():
     old = schedule("2026-10-05", [course()])
     new = schedule("2026-10-12", [Course(subject="Maths", day=5, start="16:00", end="18:00")])
     assert [c.type for c in compare(old, new)] == ["uncertain"]
+
+
+def test_comparison_detects_change_from_course_to_assessment():
+    old = schedule("2026-10-05", [course(kind="course")])
+    new = schedule("2026-10-12", [course(kind="assessment")])
+    assert [change.type for change in compare(old, new)] == ["details_changed"]

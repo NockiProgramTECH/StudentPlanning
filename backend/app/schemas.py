@@ -12,6 +12,9 @@ class Course(BaseModel):
     room: str | None = Field(default=None, max_length=100)
     teacher: str | None = Field(default=None, max_length=120)
     source_page: int | None = Field(default=None, ge=1)
+    # Unknown is intentional: absence of a color never proves in-person teaching.
+    kind: Literal["course", "assessment", "unknown"] = "unknown"
+    delivery_mode: Literal["online", "in_person", "unknown"] = "unknown"
     needs_review: bool = False
 
     @model_validator(mode="after")

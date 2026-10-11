@@ -59,6 +59,10 @@ def compare(previous: Schedule, current: Schedule) -> list[Change]:
             kind = "room_changed"
         elif old.teacher and new.teacher and _norm(old.teacher) != _norm(new.teacher):
             kind = "details_changed"
+        elif old.kind != "unknown" and new.kind != "unknown" and old.kind != new.kind:
+            kind = "details_changed"
+        elif old.delivery_mode != "unknown" and new.delivery_mode != "unknown" and old.delivery_mode != new.delivery_mode:
+            kind = "details_changed"
         else:
             continue
         changes.append(Change(type=kind, subject=new.subject, previous=old, current=new))

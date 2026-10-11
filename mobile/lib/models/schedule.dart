@@ -9,29 +9,35 @@ class Course {
   final String? teacher;
   final int? sourcePage;
   final bool needsReview;
+  final String kind; // course, assessment, unknown
+  final String deliveryMode; // online, in_person, unknown
 
   const Course({required this.subject, required this.day, required this.start,
-    required this.end, this.room, this.teacher, this.sourcePage, this.needsReview = false});
+    required this.end, this.room, this.teacher, this.sourcePage, this.needsReview = false, this.kind = 'unknown', this.deliveryMode = 'unknown'});
 
   factory Course.fromJson(Map<String, dynamic> json) => Course(
     subject: json['subject'] as String, day: json['day'] as int,
     start: json['start'] as String, end: json['end'] as String,
     room: json['room'] as String?, teacher: json['teacher'] as String?,
     sourcePage: json['source_page'] as int?, needsReview: json['needs_review'] as bool? ?? false,
+    kind: json['kind'] as String? ?? 'unknown', deliveryMode: json['delivery_mode'] as String? ?? 'unknown',
   );
 
   Map<String, dynamic> toJson() => {
     'subject': subject, 'day': day, 'start': start, 'end': end,
     'room': room, 'teacher': teacher, 'source_page': sourcePage, 'needs_review': needsReview,
+    'kind': kind, 'delivery_mode': deliveryMode,
   };
 
   Course copyWith({String? subject, int? day, String? start, String? end,
-    Object? room = _unchanged, Object? teacher = _unchanged, bool? needsReview}) => Course(
+    Object? room = _unchanged, Object? teacher = _unchanged, bool? needsReview,
+    String? kind, String? deliveryMode}) => Course(
     subject: subject ?? this.subject, day: day ?? this.day,
     start: start ?? this.start, end: end ?? this.end,
     room: identical(room, _unchanged) ? this.room : room as String?,
     teacher: identical(teacher, _unchanged) ? this.teacher : teacher as String?, sourcePage: sourcePage,
     needsReview: needsReview ?? this.needsReview,
+    kind: kind ?? this.kind, deliveryMode: deliveryMode ?? this.deliveryMode,
   );
 }
 

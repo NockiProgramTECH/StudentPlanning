@@ -28,6 +28,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final room = TextEditingController(text: original.room ?? '');
     final teacher = TextEditingController(text: original.teacher ?? '');
     var day = original.day;
+    var kind = original.kind;
+    var deliveryMode = original.deliveryMode;
     String? error;
     final replacement = await showDialog<Course>(context: context, builder: (context) => StatefulBuilder(
       builder: (context, refresh) => AlertDialog(
@@ -48,6 +50,20 @@ class _ReviewScreenState extends State<ReviewScreen> {
           TextField(controller: room, decoration: const InputDecoration(labelText: 'Salle (facultatif)')),
           const SizedBox(height: 10),
           TextField(controller: teacher, decoration: const InputDecoration(labelText: 'Enseignant (facultatif)')),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(value: kind, decoration: const InputDecoration(labelText: 'Type de séance'),
+            items: const [
+              DropdownMenuItem(value: 'unknown', child: Text('À déterminer')),
+              DropdownMenuItem(value: 'course', child: Text('Cours')),
+              DropdownMenuItem(value: 'assessment', child: Text('Devoir')),
+            ], onChanged: (value) => refresh(() => kind = value ?? kind)),
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(value: deliveryMode, decoration: const InputDecoration(labelText: 'Modalité'),
+            items: const [
+              DropdownMenuItem(value: 'unknown', child: Text('À déterminer')),
+              DropdownMenuItem(value: 'in_person', child: Text('En présentiel')),
+              DropdownMenuItem(value: 'online', child: Text('En ligne')),
+            ], onChanged: (value) => refresh(() => deliveryMode = value ?? deliveryMode)),
           if (error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(error!, style: const TextStyle(color: Colors.red))),
         ])),
         actions: [
@@ -61,7 +77,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
             Navigator.pop(context, original.copyWith(subject: subject.text.trim(), day: day,
               start: start.text, end: end.text,
               room: room.text.trim().isEmpty ? null : room.text.trim(),
-              teacher: teacher.text.trim().isEmpty ? null : teacher.text.trim(), needsReview: false));
+              teacher: teacher.text.trim().isEmpty ? null : teacher.text.trim(),
+              kind: kind, deliveryMode: deliveryMode, needsReview: false));
           }, child: const Text('Appliquer')),
         ],
       ),

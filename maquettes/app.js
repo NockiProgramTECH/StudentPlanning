@@ -52,6 +52,8 @@ const baseCourses = [
   {
     id: 4,
     subject: "Bases de données",
+    kind: "course",
+    deliveryMode: "online",
     day: 2,
     start: "14:00",
     end: "16:00",
@@ -61,6 +63,7 @@ const baseCourses = [
   {
     id: 5,
     subject: "Réseaux",
+    kind: "assessment",
     day: 3,
     start: "08:00",
     end: "10:00",
@@ -144,9 +147,23 @@ function header(title, action = "") {
 }
 function courseCard(course, editable = false) {
   const details = [course.room, course.teacher].filter(Boolean).join(" · ");
+  const labels = [
+    course.kind === "assessment"
+      ? '<span class="course-label exam">DEVOIR</span>'
+      : "",
+    course.deliveryMode === "online"
+      ? '<span class="course-label online">EN LIGNE</span>'
+      : "",
+  ].join("");
+  const colorClass =
+    course.kind === "assessment"
+      ? "red"
+      : course.deliveryMode === "online"
+        ? "yellow"
+        : palette[course.id % 3];
   return `<article class="course-card" ${editable ? `role="button" tabindex="0" data-edit="${course.id}" aria-label="Modifier ${escapeHTML(course.subject)}"` : ""}>
-    <span class="stripe ${palette[course.id % 3]}"></span><div class="course-time">${escapeHTML(course.start)}<br><small>${escapeHTML(course.end)}</small></div>
-    <div class="course-body"><b>${escapeHTML(course.subject)}</b><span>${escapeHTML(details || "Salle non renseignée")}${course.needsReview ? " · À vérifier" : ""}</span></div>
+    <span class="stripe ${colorClass}"></span><div class="course-time">${escapeHTML(course.start)}<br><small>${escapeHTML(course.end)}</small></div>
+    <div class="course-body"><b>${escapeHTML(course.subject)}</b>${labels}<span>${escapeHTML(details || "Salle non renseignée")}${course.needsReview ? " · À vérifier" : ""}</span></div>
     ${editable ? '<span class="course-arrow" aria-hidden="true">›</span>' : ""}</article>`;
 }
 function home() {
@@ -333,6 +350,15 @@ function editCourse(id) {
       <label>Fin<input class="text-input" name="end" type="time" required value="${escapeHTML(course.end)}"></label></div>
       <label>Salle<input class="text-input" name="room" maxlength="100" value="${escapeHTML(course.room)}"></label>
       <label>Enseignant<input class="text-input" name="teacher" maxlength="120" value="${escapeHTML(course.teacher)}"></label>
+      <div class="row"><label>Type<select class="text-input" name="kind">
+        <option value="unknown" ${!course.kind || course.kind === "unknown" ? "selected" : ""}>À déterminer</option>
+        <option value="course" ${course.kind === "course" ? "selected" : ""}>Cours</option>
+        <option value="assessment" ${course.kind === "assessment" ? "selected" : ""}>Devoir</option>
+      </select></label><label>Modalité<select class="text-input" name="deliveryMode">
+        <option value="unknown" ${!course.deliveryMode || course.deliveryMode === "unknown" ? "selected" : ""}>À déterminer</option>
+        <option value="in_person" ${course.deliveryMode === "in_person" ? "selected" : ""}>Présentiel</option>
+        <option value="online" ${course.deliveryMode === "online" ? "selected" : ""}>En ligne</option>
+      </select></label></div>
       <p id="edit-error" class="error-msg" role="alert"></p>
       <div class="modal-actions"><button type="button" class="button-secondary" data-close="true">Annuler</button><button type="submit" class="button-primary">Enregistrer</button></div>
     </form></div></div>`;
@@ -352,6 +378,8 @@ function editCourse(id) {
       end,
       room: String(fields.get("room")).trim(),
       teacher: String(fields.get("teacher")).trim(),
+      kind: String(fields.get("kind")),
+      deliveryMode: String(fields.get("deliveryMode")),
       needsReview: false,
     });
     state.edited = true;

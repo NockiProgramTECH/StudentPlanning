@@ -16,7 +16,9 @@ class CourseCard extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 10),
     child: InkWell(borderRadius: BorderRadius.circular(22), onTap: onTap,
       child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [
-        Container(width: 4, height: 62, decoration: BoxDecoration(color: teal, borderRadius: BorderRadius.circular(4))),
+        Container(width: 4, height: 62, decoration: BoxDecoration(
+          color: course.kind == 'assessment' ? const Color(0xFFD85151)
+            : course.deliveryMode == 'online' ? const Color(0xFFD6AE36) : teal, borderRadius: BorderRadius.circular(4))),
         const SizedBox(width: 14),
         SizedBox(width: 53, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(course.start, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: ink)),
@@ -26,6 +28,11 @@ class CourseCard extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(course.subject, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
+          if (course.kind == 'assessment' || course.deliveryMode == 'online')
+            Padding(padding: const EdgeInsets.only(top: 4, bottom: 3), child: Text(
+              [if (course.kind == 'assessment') 'DEVOIR', if (course.deliveryMode == 'online') 'EN LIGNE'].join('  ·  '),
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800,
+                color: course.kind == 'assessment' ? const Color(0xFFD85151) : const Color(0xFF947016)))),
           const SizedBox(height: 5),
           Text([if (course.room?.isNotEmpty == true) course.room!, if (course.teacher?.isNotEmpty == true) course.teacher!].join(' · '),
             maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: muted, fontSize: 12)),
