@@ -105,12 +105,14 @@ const state = {
   week: monday,
   edited: false,
   validated: false,
+  completedRevisions: [],
 };
 const screens = [
   ["home", "Accueil"],
   ["import", "Importer un PDF"],
   ["review", "Vérifier les cours"],
   ["planning", "Planning hebdomadaire"],
+  ["revisions", "Révisions & rappels"],
   ["compare", "Comparer les semaines"],
   ["history", "Historique"],
 ];
@@ -136,6 +138,7 @@ function icon(name) {
     import: "↥",
     review: "☑",
     planning: "▦",
+    revisions: "✎",
     compare: "⇄",
     history: "◷",
   };
@@ -255,6 +258,66 @@ function planning() {
     ${week !== monday ? '<button class="button-secondary" data-action="current-week" style="margin-top:20px">← Revenir à la semaine actuelle</button>' : ""}
   </div>`;
 }
+// Fictional preview only: the real Flutter planner runs offline on the device.
+function revisions() {
+  const sessions = [
+    {
+      id: 1,
+      day: "LUNDI 12 OCTOBRE",
+      time: "09:00 – 09:50",
+      subject: "Réseaux",
+      where: "Créneau libre",
+    },
+    {
+      id: 2,
+      day: "LUNDI 12 OCTOBRE",
+      time: "20:00 – 20:50",
+      subject: "Electronique analogique",
+      where: "À la maison",
+    },
+    {
+      id: 3,
+      day: "MERCREDI 14 OCTOBRE",
+      time: "20:00 – 20:50",
+      subject: "Transmission des signaux",
+      where: "À la maison",
+    },
+    {
+      id: 4,
+      day: "SAMEDI 17 OCTOBRE",
+      time: "14:00 – 14:50",
+      subject: "TEEO",
+      where: "Créneau libre",
+    },
+    {
+      id: 5,
+      day: "DIMANCHE 18 OCTOBRE",
+      time: "09:00 – 09:50",
+      subject: "Réseaux",
+      where: "Week-end",
+    },
+  ];
+  let lastDay = "";
+  return `<div class="screen">${header("Mes révisions", "SUR LE TÉLÉPHONE")}
+    <div class="overline">VOTRE TEMPS LIBRE</div><h2>Du temps pour<br>apprendre.</h2>
+    <p class="lede">Des séances placées hors des cours, le soir et le week-end.</p>
+    <span class="tag-demo">✳ &nbsp; EXEMPLE FICTIF · AUCUNE ALERTE RÉELLE</span>
+    <div class="count-panel"><span class="count-icon">✎</span><div><strong>${state.completedRevisions.length} / ${sessions.length} séances terminées</strong><small>50 min par séance · 10 min de pause</small></div></div>
+    <div class="change-preview"><b>↗ &nbsp; Fréquence de la semaine passée</b><p>Réseaux : 0 fois &nbsp; · &nbsp; Electronique : 2 fois</p><span class="mini-note">La matière la moins révisée passe en priorité.</span></div>
+    ${sessions
+      .map((session) => {
+        const heading =
+          session.day !== lastDay
+            ? `<div class="review-day">${session.day}</div>`
+            : "";
+        lastDay = session.day;
+        const done = state.completedRevisions.includes(session.id);
+        return `${heading}<button class="revision-card ${done ? "done" : ""}" data-revision="${session.id}" aria-pressed="${done}"><span class="revision-icon">${session.where === "À la maison" ? "☾" : "☀"}</span><span class="revision-copy"><b>${session.subject}</b><small>${session.time} · ${session.where}</small></span><span class="revision-check">${done ? "✓" : "○"}</span></button>`;
+      })
+      .join("")}
+    <div class="warning"><b>🔔 &nbsp; Rappels locaux dans l'application Android</b>Un cours du matin : rappel 1 h avant. Une révision : rappel à l'heure prévue. Ici, les boutons simulent uniquement le suivi.</div>
+  </div>`;
+}
 function compare() {
   const changes = [
     {
@@ -305,6 +368,7 @@ const renderers = {
   import: importScreen,
   review,
   planning,
+  revisions,
   compare,
   history: historyScreen,
 };
@@ -319,6 +383,7 @@ function render() {
   $("#bottom-nav").innerHTML = [
     ["home", "Accueil"],
     ["planning", "Planning"],
+    ["revisions", "Révisions"],
     ["history", "Historique"],
   ]
     .map(
@@ -395,7 +460,7 @@ document.addEventListener("click", (event) => {
     return;
   }
   const button = event.target.closest(
-    "[data-close],[data-screen],[data-action],[data-edit],[data-delete],[data-day],[data-week]",
+    "[data-close],[data-screen],[data-action],[data-edit],[data-delete],[data-day],[data-week],[data-revision]",
   );
   if (!button) return;
   if (button.dataset.close) {
@@ -416,6 +481,15 @@ document.addEventListener("click", (event) => {
     state.selectedDay = 1;
     state.screen = "planning";
     render();
+    return;
+  }
+  if (button.dataset.revision) {
+    const id = Number(button.dataset.revision);
+    state.completedRevisions = state.completedRevisions.includes(id)
+      ? state.completedRevisions.filter((value) => value !== id)
+      : [...state.completedRevisions, id];
+    render();
+    toast("Suivi fictif mis à jour · aucun rappel système programmé.");
     return;
   }
   if (button.dataset.edit) {

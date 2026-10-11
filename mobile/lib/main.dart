@@ -7,6 +7,7 @@ import 'screens/history_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/import_screen.dart';
 import 'screens/planning_screen.dart';
+import 'screens/revision_screen.dart';
 import 'services/schedule_store.dart';
 import 'theme.dart';
 
@@ -53,7 +54,7 @@ class _AppShellState extends State<AppShell> {
   Future<void> save(Schedule schedule) async {
     await store.save(schedule);
     await refresh();
-    if (mounted) setState(() => tab = 0);
+    if (mounted) setState(() => tab = 2);
   }
 
   void openMockups() => Navigator.of(context).push(MaterialPageRoute(builder: (routeContext) => const MockupGallery()));
@@ -72,6 +73,7 @@ class _AppShellState extends State<AppShell> {
     final pages = [
       HomeScreen(schedule: current, onImport: openImport, onPlanning: () => setState(() => tab = 1), onMockups: openMockups),
       PlanningScreen(schedule: current),
+      RevisionScreen(schedule: current, store: store),
       HistoryScreen(schedules: saved),
     ];
     return Scaffold(body: IndexedStack(index: tab, children: pages),
@@ -79,6 +81,7 @@ class _AppShellState extends State<AppShell> {
         backgroundColor: Colors.white, indicatorColor: mint, destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Accueil'),
           NavigationDestination(icon: Icon(Icons.calendar_month_outlined), selectedIcon: Icon(Icons.calendar_month_rounded), label: 'Planning'),
+          NavigationDestination(icon: Icon(Icons.menu_book_outlined), selectedIcon: Icon(Icons.menu_book_rounded), label: 'Révisions'),
           NavigationDestination(icon: Icon(Icons.history_rounded), label: 'Historique'),
         ]));
   }

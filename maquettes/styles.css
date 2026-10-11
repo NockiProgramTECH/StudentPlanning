@@ -1188,3 +1188,56 @@ p {
 .course-label.online {
   color: #947016;
 }
+
+.revision-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: #fff;
+  color: var(--ink);
+  text-align: left;
+  padding: 13px;
+  margin: 0 0 9px;
+  border-radius: 15px;
+}
+.revision-icon {
+  width: 37px;
+  height: 37px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--mint);
+  color: var(--teal);
+  font-size: 21px;
+}
+.revision-copy {
+  flex: 1;
+  min-width: 0;
+}
+.revision-copy b {
+  display: block;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.revision-copy small {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.revision-check {
+  color: var(--teal);
+  font-size: 22px;
+}
+.revision-card.done .revision-copy b {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.mini-note {
+  font-size: 10px;
+  color: var(--teal);
+}

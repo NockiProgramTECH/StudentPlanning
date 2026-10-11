@@ -24,10 +24,10 @@ function click(doc, selector) {
   button.click();
 }
 
-test("les six écrans et la correction du cours sont accessibles sans API", () => {
+test("les sept écrans et la correction du cours sont accessibles sans API", () => {
   const { window, doc } = app();
   assert.match(doc.querySelector("#app").textContent, /Votre semaine/);
-  assert.equal(doc.querySelectorAll("#screen-nav button").length, 6);
+  assert.equal(doc.querySelectorAll("#screen-nav button").length, 7);
   click(doc, '[data-screen="import"]');
   assert.match(doc.querySelector("#app").textContent, /Un PDF/);
   click(doc, '[data-action="simulate"]');
@@ -71,4 +71,20 @@ test("les exemples rouge et jaune sont visibles et modifiables", () => {
   click(doc, '[data-screen="review"]');
   click(doc, '[data-edit="5"]');
   assert.equal(doc.querySelector('[name="kind"]').value, "assessment");
+});
+
+test("la maquette des révisions montre les créneaux libres et le suivi fictif", () => {
+  const { doc } = app();
+  click(doc, '[data-screen="revisions"]');
+  assert.match(doc.querySelector("#app").textContent, /20:00/);
+  assert.match(doc.querySelector("#app").textContent, /DIMANCHE/);
+  assert.equal(
+    doc.querySelector('[data-revision="1"]').getAttribute("aria-pressed"),
+    "false",
+  );
+  click(doc, '[data-revision="1"]');
+  assert.equal(
+    doc.querySelector('[data-revision="1"]').getAttribute("aria-pressed"),
+    "true",
+  );
 });

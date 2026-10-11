@@ -11,6 +11,7 @@ Application Android Flutter + API FastAPI pour transformer un emploi du temps **
 | Vérification | Voir les avertissements et les différences proposées avec N-1 ; toucher un cours pour corriger ses champs, le glisser pour le retirer, puis valider. |
 | Planning | Parcourir les 7 jours, voir horaires, salle et enseignant. |
 | Historique | Revoir les semaines validées enregistrées localement en SQLite, même hors ligne. |
+| Révisions | Placer des séances dans les trous du planning, en soirée et le week-end ; suivre les séances terminées et recevoir des rappels Android locaux. |
 
 ## Démarrage API
 
@@ -69,11 +70,15 @@ D'après la convention décrite par l'utilisateur pour l'année scolaire, **le r
 
 ### Limitations actuelles
 
-La grille du PDF réel fourni est couverte par des tests pour L2 SIR. Les autres semaines de l’année et les changements de mise en page restent à valider ; un format non reconnu passe par OpenRouter. L'API ne fait pas d'OCR, la comparaison ne garantit pas que les différences de documents soient de vrais changements, et les corrections manuelles effectuées après import ne recalculent pas les propositions N-1 affichées (un avertissement le signale). Le stockage est local par appareil, sans compte ni synchronisation. La maquette n'implémente pas encore notifications ni traitement différé.
+La grille du PDF réel fourni est couverte par des tests pour L2 SIR. Les autres semaines de l’année et les changements de mise en page restent à valider ; un format non reconnu passe par OpenRouter. L'API ne fait pas d'OCR, la comparaison ne garantit pas que les différences de documents soient de vrais changements, et les corrections manuelles effectuées après import ne recalculent pas les propositions N-1 affichées (un avertissement le signale). Le stockage est local par appareil, sans compte ni synchronisation. Le prototype HTML simule seulement les révisions ; les alertes réelles nécessitent l'application Android et son autorisation de notifications. Le traitement différé côté API n'est pas inclus.
+
+## Révisions et notifications locales
+
+Après validation d'un vrai planning, l'onglet **Révisions** construit un programme sur le téléphone : séances libres de 50 minutes en journée, créneaux de **20 h à 22 h 30** et week-end, sans collision avec les cours. Les matières moins travaillées **la semaine précédente** sont prioritaires selon les séances réellement marquées terminées. Les données restent dans SQLite local (migration automatique version 1 → 2). Les cours du matin sont rappelés **1 h avant** (07 h 30 → 06 h 30) et les révisions à leur début. L'utilisateur doit activer les notifications ; Android peut différer les alarmes si les alarmes exactes ne sont pas autorisées. [Détails et limites](docs/REVISION_PLAN.md). Cette fonctionnalité n'envoie pas l'historique de révisions au backend.
 
 ## Maquettes interactives HTML / CSS / JavaScript
 
-Le prototype **visible dans le navigateur** est dans [`maquettes/`](maquettes/) : six écrans (accueil, import, vérification avec édition, planning par jour, comparaison, historique), adaptés au mobile et au bureau. Ouvrir directement `maquettes/index.html` dans un navigateur, ou démarrer un serveur local :
+Le prototype **visible dans le navigateur** est dans [`maquettes/`](maquettes/) : sept écrans (accueil, import, vérification avec édition, planning par jour, révisions fictives, comparaison, historique), adaptés au mobile et au bureau. Ouvrir directement `maquettes/index.html` dans un navigateur, ou démarrer un serveur local :
 
 ```bash
 cd maquettes
@@ -92,4 +97,4 @@ flutter pub get
 flutter run --dart-define=SHOW_MOCKUPS=true
 ```
 
-Sans `SHOW_MOCKUPS`, l'icône « Voir les maquettes » en haut de l'accueil ouvre cette galerie. Le mode maquette Flutter n'appelle pas l'API et n'enregistre aucun planning. L'aperçu HTML est un **prototype visuel séparé**, pas une compilation Flutter Web. La compilation Flutter reste à vérifier sur une machine avec Flutter SDK.
+Sans `SHOW_MOCKUPS`, l'icône « Voir les maquettes » en haut de l'accueil ouvre cette galerie. Le mode maquette Flutter n'appelle pas l'API et n'enregistre aucun planning. L'onglet de révisions Android se configure après validation d'un vrai PDF ; les séances de la galerie HTML restent fictives. L'aperçu HTML est un **prototype visuel séparé**, pas une compilation Flutter Web. La compilation Flutter reste à vérifier sur une machine avec Flutter SDK.
