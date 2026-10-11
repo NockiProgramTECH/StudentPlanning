@@ -60,9 +60,9 @@ class _ImportScreenState extends State<ImportScreen> {
 
   Future<void> process() async {
     if (widget.previewMode) {
-      await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => ReviewScreen(
+      await Navigator.push<bool>(context, MaterialPageRoute(builder: (routeContext) => ReviewScreen(
         schedule: demoToReview(DateTime.now()), changes: demoChanges(DateTime.now()),
-        onSave: (_) async {}, previewMode: true)));
+        onSave: (schedule) async {}, previewMode: true)));
       return;
     }
     if (bytes == null || classController.text.trim().isEmpty) {
@@ -76,7 +76,7 @@ class _ImportScreenState extends State<ImportScreen> {
       final result = await PlanningApi().importPdf(bytes: bytes!, filename: filename!,
         className: name, weekStart: monday, previous: previous);
       if (!mounted) return;
-      final saved = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => ReviewScreen(
+      final saved = await Navigator.push<bool>(context, MaterialPageRoute(builder: (routeContext) => ReviewScreen(
         schedule: result.schedule, changes: result.changes, onSave: widget.onSaved)));
       if (mounted && saved == true) Navigator.of(context).pop();
     } catch (e) {

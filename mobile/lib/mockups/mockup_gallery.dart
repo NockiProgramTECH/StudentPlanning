@@ -19,20 +19,20 @@ class MockupGallery extends StatelessWidget {
     final current = demoSchedule(now);
     final changes = demoChanges(now);
     void open(Widget screen) {
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
+      Navigator.of(context).push(MaterialPageRoute<void>(builder: (routeContext) => screen));
     }
     final entries = <(String, String, IconData, Widget)>[
       ('01', 'Accueil', Icons.home_outlined, HomeScreen(schedule: current,
         onImport: () => open(ImportScreen(store: ScheduleStore(), initialClass: current.className,
-          onSaved: (_) async {}, previewMode: true)),
+          onSaved: (schedule) async {}, previewMode: true)),
         onPlanning: () => open(PlanningScreen(schedule: current)),
         onMockups: () => Navigator.of(context).pop())),
       ('02', 'Importer un PDF', Icons.upload_file_outlined,
         ImportScreen(store: ScheduleStore(), initialClass: current.className,
-          onSaved: (_) async {}, previewMode: true)),
+          onSaved: (schedule) async {}, previewMode: true)),
       ('03', 'Vérifier les cours', Icons.fact_check_outlined,
         ReviewScreen(schedule: demoToReview(now), changes: changes,
-          onSave: (_) async {}, previewMode: true)),
+          onSave: (schedule) async {}, previewMode: true)),
       ('04', 'Planning hebdomadaire', Icons.calendar_month_outlined,
         PlanningScreen(schedule: current)),
       ('05', 'Comparer les semaines', Icons.compare_arrows_rounded,
