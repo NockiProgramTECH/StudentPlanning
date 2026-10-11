@@ -50,6 +50,14 @@ def test_pdf_validation():
     assert "OPENROUTER_API_KEY" in no_key.json()["detail"]
 
 
+def test_health_and_openapi_available_without_ai_key(monkeypatch):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+    assert client.get("/openapi.json").status_code == 200
+
+
 def test_compare_endpoint():
     body = {"previous": schedule("2026-10-05", [course()]).model_dump(mode="json"),
             "current": schedule("2026-10-12", [Course(subject="Maths", day=1, start="09:00", end="10:00")]).model_dump(mode="json")}

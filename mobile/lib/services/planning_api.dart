@@ -1,10 +1,26 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import '../models/schedule.dart';
 
-/// Android emulator: 10.0.2.2. For a physical phone pass your computer LAN IP.
-const apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://192.168.1.67:8000');
+/// Set at build time: 10.0.2.2 for emulator, LAN IP for local phone,
+/// HTTPS public domain for deployed builds. Never bake a personal LAN IP in.
+const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
+
+Uri importEndpoint(String baseUrl, {bool release = kReleaseMode}) {
+  final trimmed = baseUrl.trim().replaceFirst(RegExp(r'/+$'), '');
+  final base = Uri.tryParse(trimmed);
+  if (base == null || !base.hasAuthority ||
+      (base.scheme != 'https' && base.scheme != 'http') ||
+      base.userInfo.isNotEmpty || base.query.isNotEmpty || base.fragment.isNotEmpty) {
+    throw StateError('Adresse du serveur API absente ou invalide. Fournissez --dart-define=API_BASE_URL=https://votre-domaine.');
+  }
+  if (release && base.scheme != 'https') {
+    throw StateError('En version distribuée, le serveur API doit utiliser HTTPS.');
+  }
+  return Uri.parse('$trimmed/api/import');
+}
 
 class ImportResponse {
   final Schedule schedule;
@@ -18,7 +34,7 @@ class PlanningApi {
 
   Future<ImportResponse> importPdf({required Uint8List bytes, required String filename,
     required String className, required DateTime weekStart, Schedule? previous}) async {
-    final request = http.MultipartRequest('POST', Uri.parse('$apiBaseUrl/api/import'));
+    final request = http.MultipartRequest('POST', importEndpoint(apiBaseUrl));
     request.fields['class_name'] = className;
     request.fields['week_start'] = Schedule(className: className, weekStart: weekStart, courses: const []).toJson()['week_start'] as String;
     if (previous != null) request.fields['previous'] = jsonEncode(previous.toJson());

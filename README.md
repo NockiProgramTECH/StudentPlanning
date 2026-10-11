@@ -27,7 +27,7 @@ export OPENROUTER_API_KEY='votre-cle-serveur' # requis uniquement pour l'interpr
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Documentation interactive : `http://localhost:8000/docs` · santé : `GET /health`.
+Documentation interactive : `http://localhost:8000/docs` · santé : `GET /health`. Pour une image Docker, des contrôles HTTP et les étapes de mise en ligne sur un hébergeur, voir [Déployer l'API FastAPI](docs/DEPLOY_API.md). Aucun service public permanent n'est encore configuré.
 
 Pour essayer **le PDF réel L2 SIR** (depuis `backend/`, API lancée, sans clé IA pour ce modèle reconnu) :
 
@@ -49,7 +49,7 @@ flutter pub get
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
 ```
 
-L'URL `10.0.2.2` fonctionne pour **l'émulateur Android**. Sur téléphone physique, utiliser l'adresse IP locale de l'ordinateur hébergeant l'API (même réseau), par exemple `--dart-define=API_BASE_URL=http://192.168.1.10:8000`. Le manifeste Android debug autorise HTTP uniquement pour le développement ; utiliser HTTPS en production. La commande `flutter create` génère le wrapper Gradle et les fichiers de plateforme non versionnés ; elle préserve le code Dart existant. L'environnement de développement utilisé pour préparer ce dépôt ne comporte pas Flutter SDK : la compilation Android reste à vérifier sur une machine équipée.
+L'URL `10.0.2.2` fonctionne pour **l'émulateur Android**. Sur téléphone physique en développement, utiliser l'adresse IP locale de l'ordinateur hébergeant l'API (même réseau), par exemple `--dart-define=API_BASE_URL=http://192.168.1.10:8000`. **L'URL doit être fournie au build** : aucune IP personnelle n'est plus configurée par défaut. Pour un serveur déployé, utiliser `--dart-define=API_BASE_URL=https://api.votre-domaine.tld` avec le vrai domaine HTTPS ; une version release refuse HTTP. Le manifeste Android debug autorise HTTP uniquement pour le développement. La commande `flutter create` génère le wrapper Gradle et les fichiers de plateforme non versionnés ; elle préserve le code Dart existant. L'environnement de développement utilisé pour préparer ce dépôt ne comporte pas Flutter SDK : la compilation Android reste à vérifier sur une machine équipée.
 
 ## Contrat API
 
