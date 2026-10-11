@@ -56,9 +56,9 @@ class _AppShellState extends State<AppShell> {
     if (mounted) setState(() => tab = 0);
   }
 
-  void openMockups() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MockupGallery()));
+  void openMockups() => Navigator.of(context).push(MaterialPageRoute(builder: (routeContext) => const MockupGallery()));
 
-  void openImport() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ImportScreen(
+  void openImport() => Navigator.of(context).push(MaterialPageRoute(builder: (routeContext) => ImportScreen(
     store: store, initialClass: saved.isEmpty ? '' : saved.first.className, onSaved: save)));
 
   @override

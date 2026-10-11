@@ -108,7 +108,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
         const SizedBox(height: 6),
         const Text('Propositions à confirmer dans les documents source.', style: TextStyle(color: muted, fontSize: 12)),
         if (edited) const Text('Cours corrigés : ces propositions n’ont pas été recalculées.', style: TextStyle(color: teal, fontSize: 12)),
-        TextButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ComparisonScreen(
+        TextButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (routeContext) => ComparisonScreen(
           changes: widget.changes, isDemo: widget.previewMode))),
           icon: const Icon(Icons.open_in_new_rounded, size: 17), label: const Text('Voir la comparaison')),
         const SizedBox(height: 10),

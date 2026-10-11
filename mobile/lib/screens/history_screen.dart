@@ -25,7 +25,11 @@ class HistoryScreen extends StatelessWidget {
         title: Text('Semaine du ${DateFormat('d MMMM yyyy', 'fr').format(s.weekStart)}', style: const TextStyle(fontWeight: FontWeight.w700)),
         subtitle: Text('${s.className}  ·  ${s.courses.length} cours'),
         trailing: const Icon(Icons.chevron_right_rounded),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PlanningScreen(schedule: s))),
+        onTap: () {
+          Navigator.of(context).push(MaterialPageRoute<void>(
+            builder: (_) => PlanningScreen(schedule: s),
+          ));
+        },
       )))
     ]));
 }
