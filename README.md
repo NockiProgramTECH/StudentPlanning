@@ -6,7 +6,7 @@ Application Android Flutter + API FastAPI pour transformer un emploi du temps **
 
 | Écran | Parcours |
 | --- | --- |
-| Accueil | Semaine en cours, cours du jour, accès rapide à l'import. Au premier lancement, un **exemple explicitement marqué DÉMO** montre la maquette ; il n'est jamais enregistré. |
+| Accueil | Semaine en cours, cours du jour, accès rapide à l'import. Au premier lancement, un **exemple fictif L2 SIR explicitement marqué DÉMO** montre la maquette ; il n'est jamais enregistré. |
 | Import | Choisir un PDF, saisir la classe exacte, choisir la semaine (lundi calculé automatiquement), envoyer au serveur. |
 | Vérification | Voir les avertissements et les différences proposées avec N-1 ; toucher un cours pour corriger ses champs, le glisser pour le retirer, puis valider. |
 | Planning | Parcourir les 7 jours, voir horaires, salle et enseignant. |
@@ -27,7 +27,15 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Documentation interactive : `http://localhost:8000/docs` · santé : `GET /health`.
-La clé **ne doit jamais** être placée dans Flutter ou versionnée. Sans clé, l'import renvoie une erreur explicite 503 ; la maquette et l'historique restent utilisables. Le backend ne conserve pas le PDF en disque : il valide sa signature, sa taille (10 Mo), son nombre de pages (20) et extrait le texte avec PyMuPDF avant de transmettre **seulement ce texte et ses coordonnées** à OpenRouter. Les scans sans texte nécessitent un OCR et sont refusés. Il n'y a ni authentification ni limitation de débit : ne pas déployer cette API publiquement en l'état.
+
+Pour essayer **le PDF réel L2 SIR** (depuis `backend/`, API lancée, sans clé IA pour ce modèle reconnu) :
+
+```bash
+curl -F 'file=@tests/Emploi_temps_12 -17-oct 2026.pdf;type=application/pdf' \
+  -F 'class_name=L2 SIR' -F 'week_start=2026-10-12' \
+  http://localhost:8000/api/import
+```
+La clé **ne doit jamais** être placée dans Flutter ou versionnée. Sans clé, les PDF au format de grille ESUPEX reconnu sont traités par l’extracteur déterministe ; un format non reconnu renvoie une erreur explicite 503 si le service IA n’est pas configuré. Le backend ne conserve pas le PDF importé en disque : il valide sa signature, sa taille (10 Mo), son nombre de pages (20) et extrait le texte avec PyMuPDF avant de transmettre **seulement ce texte et ses coordonnées** à OpenRouter. Les scans sans texte nécessitent un OCR et sont refusés. Il n'y a ni authentification ni limitation de débit : ne pas déployer cette API publiquement en l'état.
 
 ## Démarrage Flutter / Android
 
@@ -44,7 +52,7 @@ L'URL `10.0.2.2` fonctionne pour **l'émulateur Android**. Sur téléphone physi
 
 ## Contrat API
 
-- `POST /api/import` : multipart avec `file` (PDF), `class_name`, `week_start` (lundi ISO `YYYY-MM-DD`) et éventuellement `previous` (planning N-1 validé en JSON). Répond `{schedule, changes_from_previous_week}`. Un PDF scanné, un document ambigu ou une réponse IA invalide ne génèrent pas silencieusement de faux cours.
+- `POST /api/import` : multipart avec `file` (PDF), `class_name`, `week_start` (lundi ISO `YYYY-MM-DD`) et éventuellement `previous` (planning N-1 validé en JSON). Répond `{schedule, changes_from_previous_week}`. Un PDF scanné, un document ambigu ou une réponse IA invalide ne génèrent pas silencieusement de faux cours. Les pages sont filtrées par classe ; la date du PDF est comparée au lundi choisi lorsqu’elle est lisible.
 - `POST /api/compare` : `{previous: Schedule, current: Schedule}` pour des semaines consécutives de la même classe ; répond `{changes: [...]}`. Les changements sont des **propositions** à confirmer, et la comparaison reste prudente sur les cours répétés.
 - `Schedule` : `{class_name, week_start, courses: [{subject, day, start, end, room, teacher, source_page, kind, delivery_mode, needs_review}], warnings}` ; `day` va de 1 (lundi) à 7 (dimanche). Les horaires sont en `HH:mm`. `kind` vaut `course`, `assessment` ou `unknown` ; `delivery_mode` vaut `online`, `in_person` ou `unknown`.
 
@@ -57,11 +65,11 @@ python -m pytest -q
 
 D'après la convention décrite par l'utilisateur pour l'année scolaire, **le rouge dans une case peut signaler un devoir** et **le jaune peut signaler un cours en ligne**. Le backend extrait maintenant la couleur du texte et des fonds dessinés à proximité des blocs (`visual_cues` : `red_text`, `red_fill`, `yellow_text`, `yellow_fill`). Ces indices sont transmis **avec le texte et les coordonnées**, jamais le PDF brut, au modèle d'interprétation. Le modèle doit confirmer la classe et le contexte de la case : une couleur de titre ou de légende ne doit pas qualifier tous les cours. En cas de doute, `unknown` et `needs_review` sont préférables à une classification inventée. La revue Flutter permet de modifier le type de séance et la modalité ; les cartes affichent « DEVOIR » en rouge et « EN LIGNE » en jaune. Les maquettes HTML utilisent uniquement des exemples fictifs, sans analyse de PDF.
 
-**Validation indispensable :** la pièce jointe signalée comme `Emploi_temps_12 -17-oct 2026.pdf` n'a pas été montée dans `/home/user/uploads/` malgré deux envois. Les tests actuels utilisent donc un **PDF synthétique** coloré ; ils ne prouvent pas encore que la structure réelle de l'établissement fonctionne. Pour valider la mise en page, fournir le fichier par un chemin réellement accessible dans le dépôt (sans l'ajouter à Git si le document contient des données sensibles), ou des captures des cases et de la légende.
+**Document réel vérifié :** `backend/tests/Emploi_temps_12 -17-oct 2026.pdf` comporte 13 pages ; **L2 SIR est sur la page 6**, et non sur la page L3 SIR. La grille L2 SIR contient 7 cours du 12 au 17 octobre 2026. Le bandeau jaune « Prévision des devoirs » et les textes rouges de la légende/pied de page **ne sont pas** des cours en ligne ou des devoirs planifiés cette semaine. L'import de cette page fonctionne sans clé IA grâce à l'analyse géométrique des cases fusionnées ; les autres mises en page peuvent encore nécessiter OpenRouter. Voir [le diagnostic de cette semaine](docs/EXTRACTION_L2_SIR.md).
 
 ### Limitations actuelles
 
-La qualité de l'interprétation dépend du PDF réel et du modèle configuré. Le document annoncé en pièce jointe n'était pas accessible dans cet environnement : la reconstruction des tableaux doit encore être vérifiée sur un PDF réel de l'établissement. L'API ne fait pas d'OCR, la comparaison ne garantit pas que les différences de documents soient de vrais changements, et les corrections manuelles effectuées après import ne recalculent pas les propositions N-1 affichées (un avertissement le signale). Le stockage est local par appareil, sans compte ni synchronisation. La maquette n'implémente pas encore notifications ni traitement différé.
+La grille du PDF réel fourni est couverte par des tests pour L2 SIR. Les autres semaines de l’année et les changements de mise en page restent à valider ; un format non reconnu passe par OpenRouter. L'API ne fait pas d'OCR, la comparaison ne garantit pas que les différences de documents soient de vrais changements, et les corrections manuelles effectuées après import ne recalculent pas les propositions N-1 affichées (un avertissement le signale). Le stockage est local par appareil, sans compte ni synchronisation. La maquette n'implémente pas encore notifications ni traitement différé.
 
 ## Maquettes interactives HTML / CSS / JavaScript
 

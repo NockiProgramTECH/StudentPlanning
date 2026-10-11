@@ -59,7 +59,7 @@ class _AppShellState extends State<AppShell> {
   void openMockups() => Navigator.of(context).push(MaterialPageRoute(builder: (routeContext) => const MockupGallery()));
 
   void openImport() => Navigator.of(context).push(MaterialPageRoute(builder: (routeContext) => ImportScreen(
-    store: store, initialClass: saved.isEmpty ? '' : saved.first.className, onSaved: save)));
+    store: store, initialClass: saved.isEmpty ? 'L2 SIR' : saved.first.className, onSaved: save)));
 
   @override
   Widget build(BuildContext context) {

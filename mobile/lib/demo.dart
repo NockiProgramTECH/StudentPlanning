@@ -3,7 +3,7 @@ import 'models/schedule.dart';
 /// Clearly marked sample data for the first launch, never submitted to the API.
 Schedule demoSchedule(DateTime now) {
   final monday = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
-  return Schedule(className: 'L2 Informatique', weekStart: monday, isDemo: true, courses: const [
+  return Schedule(className: 'L2 SIR', weekStart: monday, isDemo: true, courses: const [
     Course(subject: 'Mathématiques', day: 1, start: '08:30', end: '10:00', room: 'B204', teacher: 'Mme Laurent'),
     Course(subject: 'Algorithmique', day: 1, start: '10:30', end: '12:00', room: 'Lab 03', teacher: 'M. Diallo'),
     Course(subject: 'Anglais', day: 2, start: '09:00', end: '10:30', room: 'C112'),

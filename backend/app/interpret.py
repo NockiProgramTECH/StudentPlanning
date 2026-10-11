@@ -20,6 +20,9 @@ async def interpret(pages: list[dict], class_name: str, week_start: str) -> Sche
         "Chaque cours : subject, day (1=lundi..7=dimanche), start et end (HH:mm), "
         "room, teacher (null si absents), source_page (numéro de page), needs_review (booléen), "
         "kind (course|assessment|unknown) et delivery_mode (online|in_person|unknown). "
+        "Les pages ont été filtrées par classe. Si cells est présent, chaque cellule contient "
+        "le jour et l'horaire déduits des bordures du tableau; respecte-les et ignore les zones "
+        "de prévision des devoirs ou les notes hors grille. "
         "Dans ce modèle d'emploi du temps, le ROUGE dans une case de cours peut indiquer un devoir "
         "et le JAUNE peut indiquer un cours en ligne. Les visual_cues red_text/red_fill et "
         "yellow_text/yellow_fill sont des indices associés aux blocs de texte, pas des preuves : "
@@ -49,7 +52,7 @@ async def interpret(pages: list[dict], class_name: str, week_start: str) -> Sche
         schedule = Schedule.model_validate_json(content)
         if schedule.class_name.casefold().strip() != class_name.casefold().strip() or str(schedule.week_start) != week_start:
             raise InterpretationError("Le modèle a renvoyé une classe ou une semaine différente")
-        if any(c.source_page is None or c.source_page > len(pages) for c in schedule.courses):
+        if any(c.source_page not in {page["page"] for page in pages} for c in schedule.courses):
             raise InterpretationError("Une référence de page est absente ou invalide")
         if not schedule.courses:
             schedule.warnings.append("Aucun cours identifié pour cette classe. Vérifiez le PDF et la classe.")

@@ -13,7 +13,7 @@ def _color_cue(rgb: tuple[float, float, float]) -> str | None:
     red, green, blue = rgb
     if red >= 0.60 and red > green * 1.35 and red > blue * 1.35:
         return "red"
-    if red >= 0.62 and green >= 0.56 and blue <= 0.55 and min(red, green) > blue + 0.20:
+    if red >= 0.75 and green >= 0.70 and blue <= 0.70 and min(red, green) > blue + 0.20:
         return "yellow"
     return None
 
@@ -73,7 +73,9 @@ def extract_pdf(data: bytes) -> list[dict]:
                         cues.add(f"{hue}_fill")
                 blocks.append({"text": text, "bbox": [round(v, 1) for v in bbox],
                                "visual_cues": sorted(cues)})
-            pages.append({"page": number, "blocks": blocks})
+            from .layout import class_header, weekly_cells
+            pages.append({"page": number, "class_name": class_header(page),
+                          "cells": weekly_cells(page), "blocks": blocks})
         if not any(p["blocks"] for p in pages):
             raise ExtractionError("Aucun texte sélectionnable : les PDF scannés nécessitent un OCR")
         return pages

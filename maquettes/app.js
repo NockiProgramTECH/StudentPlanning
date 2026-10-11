@@ -101,7 +101,7 @@ const state = {
   selectedWeek: monday,
   courses: baseCourses.map((c) => ({ ...c })),
   fileName: "Emploi_du_temps_S42.pdf",
-  className: "L2 Informatique",
+  className: "L2 SIR",
   week: monday,
   edited: false,
   validated: false,
@@ -296,7 +296,7 @@ function historyScreen() {
     <span class="tag-demo">✳ &nbsp; HISTORIQUE FICTIF</span>
     <div class="form-step" style="margin-top:28px">2026 &nbsp; · &nbsp; OCTOBRE</div>
     <button class="history-card" data-week="${monday}"><span class="history-icon">▦</span><span><b>Semaine du 12 octobre</b><small>${escapeHTML(state.className)} · ${state.courses.length} cours</small></span><span class="go">›</span></button>
-    <button class="history-card" data-week="${lastMonday}"><span class="history-icon">▦</span><span><b>Semaine du 5 octobre</b><small>L2 Informatique · ${previousCourses.length} cours</small></span><span class="go">›</span></button>
+    <button class="history-card" data-week="${lastMonday}"><span class="history-icon">▦</span><span><b>Semaine du 5 octobre</b><small>L2 SIR · ${previousCourses.length} cours</small></span><span class="go">›</span></button>
     <div class="warning" style="margin-top:26px"><b>✳ &nbsp; Mode maquette</b>Ces semaines sont fictives et ne sont pas sauvegardées sur votre appareil.</div>
   </div>`;
 }
