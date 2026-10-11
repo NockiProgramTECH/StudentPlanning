@@ -9,5 +9,7 @@ void main() {
     expect(copy.className, 'L2 Info');
     expect(copy.courses.single.room, 'A10');
     expect(copy.toJson()['week_start'], '2026-10-12');
+    expect(copy.courses.single.copyWith(needsReview: true).room, 'A10');
+    expect(copy.courses.single.copyWith(room: null).room, isNull);
   });
 }

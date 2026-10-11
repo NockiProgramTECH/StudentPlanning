@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'demo.dart';
+import 'mockups/mockup_gallery.dart';
 import 'models/schedule.dart';
 import 'screens/history_screen.dart';
 import 'screens/home_screen.dart';
@@ -20,7 +21,7 @@ class StudentPlanningApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'Studia · Mon planning', theme: appTheme(), debugShowCheckedModeBanner: false,
-    home: const AppShell(),
+    home: const bool.fromEnvironment('SHOW_MOCKUPS') ? const MockupGallery() : const AppShell(),
   );
 }
 
@@ -55,6 +56,8 @@ class _AppShellState extends State<AppShell> {
     if (mounted) setState(() => tab = 0);
   }
 
+  void openMockups() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MockupGallery()));
+
   void openImport() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ImportScreen(
     store: store, initialClass: saved.isEmpty ? '' : saved.first.className, onSaved: save)));
 
@@ -67,7 +70,7 @@ class _AppShellState extends State<AppShell> {
     final current = saved.where((s) => s.weekStart.year == monday.year && s.weekStart.month == monday.month && s.weekStart.day == monday.day).firstOrNull
       ?? (saved.isEmpty ? demoSchedule(DateTime.now()) : saved.first);
     final pages = [
-      HomeScreen(schedule: current, onImport: openImport, onPlanning: () => setState(() => tab = 1)),
+      HomeScreen(schedule: current, onImport: openImport, onPlanning: () => setState(() => tab = 1), onMockups: openMockups),
       PlanningScreen(schedule: current),
       HistoryScreen(schedules: saved),
     ];

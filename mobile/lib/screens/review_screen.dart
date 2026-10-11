@@ -3,18 +3,14 @@ import '../models/schedule.dart';
 import '../theme.dart';
 import '../widgets/course_card.dart';
 import 'planning_screen.dart';
-
-const changeLabels = {
-  'added': 'Cours ajouté', 'removed': 'Cours supprimé',
-  'time_changed': 'Horaire modifié', 'room_changed': 'Salle modifiée',
-  'details_changed': 'Détails modifiés', 'uncertain': 'Changement incertain',
-};
+import 'comparison_screen.dart';
 
 class ReviewScreen extends StatefulWidget {
   final Schedule schedule;
   final List<Change> changes;
   final Future<void> Function(Schedule) onSave;
-  const ReviewScreen({super.key, required this.schedule, required this.changes, required this.onSave});
+  final bool previewMode;
+  const ReviewScreen({super.key, required this.schedule, required this.changes, required this.onSave, this.previewMode = false});
   @override
   State<ReviewScreen> createState() => _ReviewScreenState();
 }
@@ -76,7 +72,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Future<void> save() async {
     setState(() => saving = true);
     try {
-      await widget.onSave(Schedule(className: widget.schedule.className, weekStart: widget.schedule.weekStart,
+      if (!widget.previewMode) await widget.onSave(Schedule(className: widget.schedule.className, weekStart: widget.schedule.weekStart,
         courses: courses, warnings: widget.schedule.warnings));
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
@@ -91,11 +87,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
     bottomNavigationBar: SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(22, 10, 22, 16),
       child: FilledButton.icon(onPressed: saving ? null : save,
         icon: saving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.check_rounded),
-        label: const Text('Valider et enregistrer')))),
+        label: Text(widget.previewMode ? 'Terminer l’aperçu' : 'Valider et enregistrer')))),
     body: ListView(padding: const EdgeInsets.fromLTRB(22, 10, 22, 20), children: [
       Text('À vous de vérifier.', style: Theme.of(context).textTheme.headlineLarge),
       const SizedBox(height: 8),
-      const Text('Relisez les cours extraits avant de les enregistrer sur votre téléphone.', style: TextStyle(color: muted)),
+      Text(widget.previewMode ? 'Exemple fictif : modifiez un cours pour découvrir la maquette. Rien ne sera enregistré.'
+        : 'Relisez les cours extraits avant de les enregistrer sur votre téléphone.', style: const TextStyle(color: muted)),
       const SizedBox(height: 20),
       if (widget.schedule.warnings.isNotEmpty || courses.any((c) => c.needsReview))
         Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: const Color(0xFFFFEBD9), borderRadius: BorderRadius.circular(16)),
@@ -111,6 +108,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
         const SizedBox(height: 6),
         const Text('Propositions à confirmer dans les documents source.', style: TextStyle(color: muted, fontSize: 12)),
         if (edited) const Text('Cours corrigés : ces propositions n’ont pas été recalculées.', style: TextStyle(color: teal, fontSize: 12)),
+        TextButton.icon(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ComparisonScreen(
+          changes: widget.changes, isDemo: widget.previewMode))),
+          icon: const Icon(Icons.open_in_new_rounded, size: 17), label: const Text('Voir la comparaison')),
         const SizedBox(height: 10),
         ...widget.changes.map((c) => Padding(padding: const EdgeInsets.only(bottom: 7), child: Row(children: [
           const Icon(Icons.compare_arrows_rounded, size: 18, color: teal), const SizedBox(width: 9),

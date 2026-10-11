@@ -56,3 +56,26 @@ python -m pytest -q
 ### Limitations actuelles
 
 La qualité de l'interprétation dépend du PDF réel et du modèle configuré. Aucun PDF d'établissement n'est fourni : la reconstruction des tableaux doit être vérifiée sur des documents représentatifs avant usage réel. L'API ne fait pas d'OCR, la comparaison ne garantit pas que les différences de documents soient de vrais changements, et les corrections manuelles effectuées après import ne recalculent pas les propositions N-1 affichées (un avertissement le signale). Le stockage est local par appareil, sans compte ni synchronisation. La maquette n'implémente pas encore notifications ni traitement différé.
+
+## Maquettes interactives HTML / CSS / JavaScript
+
+Le prototype **visible dans le navigateur** est dans [`maquettes/`](maquettes/) : six écrans (accueil, import, vérification avec édition, planning par jour, comparaison, historique), adaptés au mobile et au bureau. Ouvrir directement `maquettes/index.html` dans un navigateur, ou démarrer un serveur local :
+
+```bash
+cd maquettes
+python -m http.server 4173 --bind 0.0.0.0
+# Ouvrir http://localhost:4173
+```
+
+Le prototype est **autonome et fictif** : sélectionner un PDF affiche son nom mais **ne lit ni n'envoie son contenu**. « Voir le résultat simulé » ouvre un planning d'exemple. Les corrections restent dans la session en cours (pas de backend, pas de sauvegarde). Aucun service externe ou CDN n'est nécessaire. Source : `maquettes/index.html`, `maquettes/styles.css`, `maquettes/app.js`. Tests du prototype (facultatifs) : `cd maquettes && npm ci && npm test`.
+
+Les mêmes étapes sont aussi accessibles dans la **galerie de maquettes Flutter** (écrans natifs avec données de démonstration) :
+
+```bash
+cd mobile
+flutter create --platforms=android . # uniquement si les fichiers de plateforme manquent
+flutter pub get
+flutter run --dart-define=SHOW_MOCKUPS=true
+```
+
+Sans `SHOW_MOCKUPS`, l'icône « Voir les maquettes » en haut de l'accueil ouvre cette galerie. Le mode maquette Flutter n'appelle pas l'API et n'enregistre aucun planning. L'aperçu HTML est un **prototype visuel séparé**, pas une compilation Flutter Web. La compilation Flutter reste à vérifier sur une machine avec Flutter SDK.

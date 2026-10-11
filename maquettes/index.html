@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#f6f7f2" />
+    <meta
+      name="description"
+      content="Maquette interactive de Studia, l'application de planning étudiant."
+    />
+    <title>Studia — Maquettes interactives</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="workspace">
+      <aside class="studio-panel" aria-label="Navigation dans la maquette">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">✳</span
+          ><span>studia<span class="brand-dot">.</span></span>
+        </div>
+        <div class="panel-copy">
+          <span class="eyebrow"
+            ><span class="live-dot"></span> Prototype interactif</span
+          >
+          <h1>Le temps de<br /><em>tout voir.</em></h1>
+          <p>
+            Un planning qui vous ressemble. Découvrez les écrans de
+            l'application avant son développement final.
+          </p>
+        </div>
+        <div class="nav-heading">
+          PARCOURS DE L'ÉTUDIANT <span>06 ÉCRANS</span>
+        </div>
+        <nav
+          id="screen-nav"
+          class="screen-nav"
+          aria-label="Écrans du prototype"
+        ></nav>
+        <div class="panel-footer">
+          <span class="info-icon">i</span>
+          <p>
+            <strong>Une maquette, pas une application connectée.</strong
+            ><br />Les cours et les changements sont fictifs. Aucun PDF n'est
+            analysé ni envoyé.
+          </p>
+        </div>
+        <div class="panel-bottom">
+          <span>STUDENTPLANNING / CONCEPT 01</span><span>2026</span>
+        </div>
+      </aside>
+      <main class="preview-area">
+        <div class="preview-top">
+          <span class="preview-label"
+            ><span class="crosshair">✳</span> APERÇU MOBILE</span
+          ><span class="preview-tip"
+            >Cliquez pour explorer l'interface
+            <span aria-hidden="true">↘</span></span
+          >
+        </div>
+        <section class="device" aria-label="Aperçu de l'application Studia">
+          <div class="device-top" aria-hidden="true">
+            <span>9:41</span><span class="device-island"></span
+            ><span class="device-signals">● ▰ ▣</span>
+          </div>
+          <div id="app" class="app-content" aria-live="polite"></div>
+          <div id="bottom-nav" class="bottom-nav"></div>
+          <div class="home-indicator" aria-hidden="true"><span></span></div>
+        </section>
+        <div class="preview-bottom">
+          <span>HTML + CSS + JAVASCRIPT</span><span>DESIGN ADAPTATIF · FR</span>
+        </div>
+      </main>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="modal-root"></div>
+  </body>
+</html>

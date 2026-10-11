@@ -8,7 +8,8 @@ class HomeScreen extends StatelessWidget {
   final Schedule schedule;
   final VoidCallback onImport;
   final VoidCallback onPlanning;
-  const HomeScreen({super.key, required this.schedule, required this.onImport, required this.onPlanning});
+  final VoidCallback? onMockups;
+  const HomeScreen({super.key, required this.schedule, required this.onImport, required this.onPlanning, this.onMockups});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,9 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(width: 10),
         const Text('studia.', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22, color: ink, letterSpacing: -1)),
         const Spacer(),
-        const CircleAvatar(backgroundColor: mint, child: Icon(Icons.person_outline_rounded, color: teal)),
+        if (onMockups != null) IconButton(tooltip: 'Voir les maquettes', onPressed: onMockups,
+          icon: const Icon(Icons.dashboard_customize_outlined, color: teal))
+        else const CircleAvatar(backgroundColor: mint, child: Icon(Icons.person_outline_rounded, color: teal)),
       ]),
       const SizedBox(height: 34),
       Text(DateFormat('EEEE d MMMM', 'fr').format(today).toUpperCase(), style: const TextStyle(fontSize: 11, letterSpacing: 1.4, fontWeight: FontWeight.w800, color: teal)),

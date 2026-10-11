@@ -1,3 +1,5 @@
+const _unchanged = Object();
+
 class Course {
   final String subject;
   final int day;
@@ -24,10 +26,11 @@ class Course {
   };
 
   Course copyWith({String? subject, int? day, String? start, String? end,
-    String? room, String? teacher, bool? needsReview}) => Course(
+    Object? room = _unchanged, Object? teacher = _unchanged, bool? needsReview}) => Course(
     subject: subject ?? this.subject, day: day ?? this.day,
     start: start ?? this.start, end: end ?? this.end,
-    room: room, teacher: teacher, sourcePage: sourcePage,
+    room: identical(room, _unchanged) ? this.room : room as String?,
+    teacher: identical(teacher, _unchanged) ? this.teacher : teacher as String?, sourcePage: sourcePage,
     needsReview: needsReview ?? this.needsReview,
   );
 }
@@ -61,7 +64,11 @@ class Change {
   final String type;
   final String subject;
   final bool needsReview;
-  const Change(this.type, this.subject, this.needsReview);
+  final Course? previous;
+  final Course? current;
+  const Change(this.type, this.subject, this.needsReview, {this.previous, this.current});
   factory Change.fromJson(Map<String, dynamic> json) => Change(
-    json['type'] as String, json['subject'] as String, json['needs_review'] as bool? ?? true);
+    json['type'] as String, json['subject'] as String, json['needs_review'] as bool? ?? true,
+    previous: json['previous'] == null ? null : Course.fromJson(json['previous'] as Map<String, dynamic>),
+    current: json['current'] == null ? null : Course.fromJson(json['current'] as Map<String, dynamic>));
 }

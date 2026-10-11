@@ -6,13 +6,16 @@ import 'planning_screen.dart';
 
 class HistoryScreen extends StatelessWidget {
   final List<Schedule> schedules;
-  const HistoryScreen({super.key, required this.schedules});
+  final bool isDemo;
+  const HistoryScreen({super.key, required this.schedules, this.isDemo = false});
   @override
   Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Historique'), backgroundColor: canvas),
     body: ListView(padding: const EdgeInsets.all(22), children: [
       Text('Vos semaines', style: Theme.of(context).textTheme.headlineLarge),
       const SizedBox(height: 8),
       const Text('Vos plannings validés restent accessibles hors connexion.', style: TextStyle(color: muted)),
+      if (isDemo) const Padding(padding: EdgeInsets.only(top: 10), child: Text('APERÇU · Semaines fictives',
+        style: TextStyle(color: teal, fontWeight: FontWeight.w800, fontSize: 11))),
       const SizedBox(height: 24),
       if (schedules.isEmpty) const Card(child: Padding(padding: EdgeInsets.all(24),
         child: Text('Aucun planning enregistré. Importez un PDF pour commencer.', style: TextStyle(color: muted)))),
