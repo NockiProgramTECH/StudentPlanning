@@ -17,3 +17,15 @@ La génération du programme se fait **dans l'application**, sans API ni compte.
 - Sous Android 13+, l'utilisateur doit autoriser les notifications. Les alarmes futures sont gardées localement et réinstallées après redémarrage du téléphone. Sans autorisation d'alarme exacte sur certaines versions d'Android, le système peut décaler l'alerte de quelques minutes (économie de batterie). Aucun service de notification distant n'est utilisé. Le bouton « Tester une notification locale » permet de vérifier immédiatement les permissions sur un vrai téléphone.
 
 **À vérifier sur appareil :** l'environnement de développement utilisé ici ne dispose pas de Flutter SDK ni d'un émulateur Android. Les tests Dart/Android (`cd mobile && flutter test`, puis test de notifications sur téléphone) restent à exécuter sur une machine équipée. La galerie HTML est une simulation visuelle qui n'émet jamais de notification réelle.
+
+## Si l'écran affiche « MissingPluginException »
+
+Les notifications utilisent un canal Android natif dans `mobile/android/app/src/main/kotlin/com/studentplanning/studia/MainActivity.kt`. Un **hot reload/hot restart ne recharge pas Kotlin**. Depuis la racine **`mobile/`** (pas `mobile/planning_etudiant/`) :
+
+```bash
+flutter clean
+flutter pub get
+flutter run -d <identifiant-du-téléphone-ou-émulateur>
+```
+
+Fermer l'ancienne application et la relancer après l'installation ; **ne pas désinstaller l'application** sans sauvegarde, car cela effacerait SQLite et l'historique local. `flutter devices` liste les identifiants disponibles. Sur Chrome/Windows/iOS, le programme reste consultable là où SQLite est disponible, mais les notifications de ce MVP sont **Android uniquement**. Si l'erreur persiste, relever le nom exact du canal et de la méthode indiqués par l'exception.

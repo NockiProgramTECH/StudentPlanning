@@ -1,24 +1,72 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/schedule.dart';
 import '../revisions/revision_planner.dart';
 import '../revisions/revision_session.dart';
 
 /// Android AlarmManager + NotificationManager via a native channel.
-/// The phone stores/reinstalls future alarms on reboot; no remote push service.
+/// Study planning and SQLite must keep working even if this channel is absent
+/// (web/desktop, or an Android APK not rebuilt since native code was added).
 class LocalReminders {
-  static const _channel = MethodChannel('studia/reminders');
+  final MethodChannel _channel;
+  final bool isAndroid;
+  bool nativeMissing = false;
 
-  Future<bool> hasPermission() async =>
-    await _channel.invokeMethod<bool>('hasPermission') ?? false;
+  LocalReminders({MethodChannel channel = const MethodChannel('studia/reminders'), bool? android})
+      : _channel = channel,
+        isAndroid = android ?? (!kIsWeb && defaultTargetPlatform == TargetPlatform.android);
 
-  Future<bool> requestPermission() async =>
-    await _channel.invokeMethod<bool>('requestPermission') ?? false;
+  StateError get _rebuildRequired => StateError(
+    'Module Android des rappels absent. Fermez l’application, puis depuis mobile/ '
+    'exécutez flutter clean, flutter pub get et flutter run. Un hot reload ne suffit pas.');
 
-  Future<void> cancel(int id) async => _channel.invokeMethod<void>('cancel', id);
+  Future<bool> hasPermission() async {
+    if (!isAndroid) return false;
+    try {
+      final granted = await _channel.invokeMethod<bool>('hasPermission') ?? false;
+      nativeMissing = false;
+      return granted;
+    } on MissingPluginException {
+      nativeMissing = true;
+      return false;
+    }
+  }
 
-  Future<void> testNotification() async => _channel.invokeMethod<void>('testNotification');
+  Future<bool> requestPermission() async {
+    if (!isAndroid) return false;
+    if (nativeMissing) throw _rebuildRequired;
+    try {
+      return await _channel.invokeMethod<bool>('requestPermission') ?? false;
+    } on MissingPluginException {
+      nativeMissing = true;
+      throw _rebuildRequired;
+    }
+  }
+
+  Future<void> cancel(int id) async {
+    if (!isAndroid || nativeMissing) return;
+    try {
+      await _channel.invokeMethod<void>('cancel', id);
+    } on MissingPluginException {
+      nativeMissing = true;
+      // The session remains completed in SQLite even without a native alarm.
+    }
+  }
+
+  Future<void> testNotification() async {
+    if (!isAndroid) throw UnsupportedError('Notifications disponibles uniquement sur Android.');
+    if (nativeMissing) throw _rebuildRequired;
+    try {
+      await _channel.invokeMethod<void>('testNotification');
+    } on MissingPluginException {
+      nativeMissing = true;
+      throw _rebuildRequired;
+    }
+  }
 
   Future<void> replaceForWeek(Schedule schedule, List<RevisionSession> sessions) async {
+    if (!isAndroid) return;
+    if (nativeMissing) throw _rebuildRequired;
     final now = DateTime.now();
     final alerts = <Map<String, Object>>[];
     for (final session in sessions) {
@@ -46,6 +94,11 @@ class LocalReminders {
         'channel': 'courses',
       });
     }
-    await _channel.invokeMethod<void>('replace', alerts);
+    try {
+      await _channel.invokeMethod<void>('replace', alerts);
+    } on MissingPluginException {
+      nativeMissing = true;
+      throw _rebuildRequired;
+    }
   }
 }

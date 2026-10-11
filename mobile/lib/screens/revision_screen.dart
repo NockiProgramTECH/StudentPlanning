@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../models/schedule.dart';
 import '../revisions/revision_planner.dart';
@@ -23,6 +24,7 @@ class _RevisionScreenState extends State<RevisionScreen> {
   bool loading = true;
   bool permission = false;
   String? error;
+  String? reminderWarning;
 
   @override
   void initState() { super.initState(); load(); }
@@ -59,10 +61,23 @@ class _RevisionScreenState extends State<RevisionScreen> {
         await widget.store.replacePendingRevisions(schedule.className, schedule.weekStart, generated);
         stored = await widget.store.revisionsFor(schedule.className, schedule.weekStart);
       }
-      final allowed = await reminders.hasPermission();
-      if (allowed && !expired) await reminders.replaceForWeek(schedule, stored);
+      // Notification errors must never hide or erase the local study plan.
+      var allowed = false;
+      String? alertIssue;
+      try {
+        allowed = await reminders.hasPermission();
+        if (allowed && !expired) await reminders.replaceForWeek(schedule, stored);
+      } catch (e) {
+        allowed = false;
+        alertIssue = 'Rappels indisponibles : $e';
+      }
       if (mounted) setState(() { sessions = stored; lastWeek = previous;
-        permission = allowed; loading = false; });
+        permission = allowed; reminderWarning = alertIssue; loading = false; });
+    } on MissingPluginException {
+      if (mounted) setState(() {
+        error = 'La base locale n’est pas disponible sur cette plateforme. Lancez l’application Android depuis mobile/ avec une reconstruction complète.';
+        loading = false;
+      });
     } catch (e) {
       if (mounted) setState(() { error = 'Planning de révision indisponible : $e'; loading = false; });
     }
@@ -72,7 +87,8 @@ class _RevisionScreenState extends State<RevisionScreen> {
     try {
       final granted = await reminders.requestPermission();
       if (granted) await reminders.replaceForWeek(widget.schedule, sessions);
-      if (mounted) setState(() { permission = granted; error = granted ? null : 'Autorisez les notifications dans les paramètres du téléphone.'; });
+      if (mounted) setState(() { permission = granted; reminderWarning = null;
+        error = granted ? null : 'Autorisez les notifications dans les paramètres du téléphone.'; });
     } catch (e) {
       if (mounted) setState(() => error = 'Notifications indisponibles : $e');
     }
@@ -117,7 +133,7 @@ class _RevisionScreenState extends State<RevisionScreen> {
         else ...[
           if (expired) const Card(child: Padding(padding: EdgeInsets.all(18),
             child: Text('Cette semaine est terminée. Importez un nouvel emploi du temps pour programmer de nouvelles séances.'))),
-          if (!permission && !expired)
+          if (!permission && !expired && reminders.isAndroid && !reminders.nativeMissing)
             Container(padding: const EdgeInsets.all(17), decoration: BoxDecoration(color: mint, borderRadius: BorderRadius.circular(18)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 const Text('Rappels désactivés', style: TextStyle(color: ink, fontWeight: FontWeight.w800)),
@@ -128,6 +144,14 @@ class _RevisionScreenState extends State<RevisionScreen> {
                 TextButton.icon(onPressed: enableReminders, icon: const Icon(Icons.notifications_active_outlined),
                   label: const Text('Activer les rappels')),
               ])),
+          if (!reminders.isAndroid && !expired)
+            const Card(child: Padding(padding: EdgeInsets.all(18),
+              child: Text('Les révisions restent consultables ici. Les notifications locales nécessitent l’application Android.'))),
+          if (reminders.nativeMissing && !expired)
+            const Card(child: Padding(padding: EdgeInsets.all(18),
+              child: Text('Le module Android des notifications est absent de cette installation. Fermez l’application et reconstruisez-la depuis mobile/ avec flutter clean, flutter pub get puis flutter run. Un hot reload ne recharge pas le code natif.'))),
+          if (reminderWarning != null) Padding(padding: const EdgeInsets.only(top: 12),
+            child: Text(reminderWarning!, style: const TextStyle(color: Colors.orange))),
           if (permission && !expired) TextButton.icon(
             onPressed: () async {
               try {
