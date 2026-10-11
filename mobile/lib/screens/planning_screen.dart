@@ -32,7 +32,7 @@ class _PlanningScreenState extends State<PlanningScreen> {
         if (schedule.isDemo) const Padding(padding: EdgeInsets.only(top: 8), child: Text('APERÇU · Données de démonstration', style: TextStyle(color: teal, fontWeight: FontWeight.w800, fontSize: 11))),
         const SizedBox(height: 26),
         SizedBox(height: 78, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: 7,
-          separatorBuilder: (_, _) => const SizedBox(width: 9), itemBuilder: (context, index) {
+          separatorBuilder: (_, separatorIndex) => const SizedBox(width: 9), itemBuilder: (context, index) {
             final day = index + 1;
             final active = day == selected;
             final date = schedule.weekStart.add(Duration(days: index));

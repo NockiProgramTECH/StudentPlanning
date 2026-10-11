@@ -63,7 +63,7 @@ class ComparisonScreen extends StatelessWidget {
             const SizedBox(height: 5),
             Text(description(change), style: const TextStyle(color: muted, fontSize: 12)),
           ])),
-        ]))),
+        ])))),
       const SizedBox(height: 12),
       const Text('Ces différences sont des propositions calculées à partir du document et doivent être confirmées.',
         style: TextStyle(color: muted, fontSize: 12, height: 1.5)),

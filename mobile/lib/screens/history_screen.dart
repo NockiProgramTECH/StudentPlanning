@@ -26,6 +26,6 @@ class HistoryScreen extends StatelessWidget {
         subtitle: Text('${s.className}  ·  ${s.courses.length} cours'),
         trailing: const Icon(Icons.chevron_right_rounded),
         onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => PlanningScreen(schedule: s))),
-      ))
+      )))
     ]));
 }
