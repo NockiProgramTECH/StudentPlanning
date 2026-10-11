@@ -57,6 +57,14 @@ class MainActivity : FlutterActivity() {
                     LocalAlarmStore.cancel(this, (call.arguments as Number).toInt())
                     result.success(null)
                 }
+                "scheduleTest" -> {
+                    if (!allowed(this)) result.error("permission", "Activez les notifications", null)
+                    else try {
+                        result.success(LocalAlarmStore.scheduleTest(this))
+                    } catch (e: Exception) {
+                        result.error("schedule", e.message ?: "Test impossible", null)
+                    }
+                }
                 "testNotification" -> {
                     if (!allowed(this)) result.error("permission", "Activez les notifications", null)
                     else {
@@ -119,8 +127,15 @@ internal object LocalAlarmStore {
     }
 
     fun replace(context: Context, entries: List<Map<String, Any>>) {
-        for (entry in saved(context).asObjects()) cancelAlarm(context, entry)
+        val existing = saved(context).asObjects()
+        for (entry in existing) {
+            if (entry.getInt("id") != -1) cancelAlarm(context, entry)
+        }
         val array = JSONArray()
+        // The pending test is separate from the real weekly plan.
+        for (entry in existing) {
+            if (entry.getInt("id") == -1 && entry.getLong("at") > System.currentTimeMillis()) array.put(entry)
+        }
         for (entry in entries) {
             val json = JSONObject(entry)
             if (json.getLong("at") > System.currentTimeMillis()) {
@@ -129,6 +144,28 @@ internal object LocalAlarmStore {
             }
         }
         prefs(context).edit().putString(KEY, array.toString()).apply()
+    }
+
+    // Independent diagnostic: never replace the user's real course/revision alarms.
+    fun scheduleTest(context: Context): Long {
+        // Real reminder IDs are always positive; -1 is reserved for this test.
+        val testId = -1
+        val at = System.currentTimeMillis() + 60_000L
+        val keep = JSONArray()
+        for (entry in saved(context).asObjects()) {
+            if (entry.getInt("id") == testId) cancelAlarm(context, entry)
+            else keep.put(entry)
+        }
+        val test = JSONObject()
+            .put("id", testId)
+            .put("at", at)
+            .put("title", "Révision : rappel d'essai")
+            .put("body", "Le rappel local fonctionne. Aucun vrai cours n'a été ajouté.")
+            .put("channel", "revisions")
+        schedule(context, test)
+        keep.put(test)
+        prefs(context).edit().putString(KEY, keep.toString()).apply()
+        return at
     }
 
     fun cancel(context: Context, id: Int) {

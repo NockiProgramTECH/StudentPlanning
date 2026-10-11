@@ -11,7 +11,9 @@ import '../theme.dart';
 class RevisionScreen extends StatefulWidget {
   final Schedule schedule;
   final ScheduleStore store;
-  const RevisionScreen({super.key, required this.schedule, required this.store});
+  final bool previewMode;
+  const RevisionScreen({super.key, required this.schedule, required this.store,
+    this.previewMode = false});
 
   @override
   State<RevisionScreen> createState() => _RevisionScreenState();
@@ -43,9 +45,20 @@ class _RevisionScreenState extends State<RevisionScreen> {
     }
   }
 
-  bool get expired => !widget.schedule.weekStart.add(const Duration(days: 7)).isAfter(DateTime.now());
+  bool get expired => !widget.previewMode &&
+    !widget.schedule.weekStart.add(const Duration(days: 7)).isAfter(DateTime.now());
 
   Future<void> load({bool regenerate = false}) async {
+    if (widget.previewMode) {
+      final sample = Schedule(className: widget.schedule.className,
+        weekStart: widget.schedule.weekStart, courses: widget.schedule.courses);
+      final counts = <String, int>{'mathématiques': 3, 'algorithmique': 1};
+      final generated = planRevisions(sample, lastWeekCompleted: counts,
+        now: sample.weekStart.subtract(const Duration(days: 1)));
+      if (mounted) setState(() { sessions = generated; lastWeek = counts;
+        loading = false; permission = false; error = null; });
+      return;
+    }
     if (widget.schedule.isDemo) {
       if (mounted) setState(() { loading = false; sessions = []; });
       return;
@@ -95,6 +108,13 @@ class _RevisionScreenState extends State<RevisionScreen> {
   }
 
   Future<void> mark(RevisionSession session) async {
+    if (widget.previewMode) {
+      if (mounted) setState(() => sessions = [
+        for (final item in sessions)
+          item.id == session.id ? item.copyWith(completed: !item.completed) : item,
+      ]);
+      return;
+    }
     try {
       await widget.store.setRevisionCompleted(session.id, !session.completed);
       if (!session.completed && permission) await reminders.cancel(session.id);
@@ -105,6 +125,10 @@ class _RevisionScreenState extends State<RevisionScreen> {
   }
 
   Future<void> regenerate() async {
+    if (widget.previewMode) {
+      await load(regenerate: true);
+      return;
+    }
     final confirmed = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
       title: const Text('Recalculer les révisions ?'),
       content: const Text('Les séances terminées seront conservées. Les séances restantes et leurs rappels seront remplacés.'),
@@ -119,7 +143,7 @@ class _RevisionScreenState extends State<RevisionScreen> {
     final schedule = widget.schedule;
     final completed = sessions.where((s) => s.completed).length;
     return Scaffold(appBar: AppBar(title: const Text('Mes révisions'), backgroundColor: canvas,
-      actions: [if (!schedule.isDemo && !expired) IconButton(tooltip: 'Recalculer les séances',
+      actions: [if ((!schedule.isDemo || widget.previewMode) && !expired) IconButton(tooltip: 'Recalculer les séances',
         onPressed: loading ? null : regenerate, icon: const Icon(Icons.refresh_rounded))]),
       body: SafeArea(child: ListView(padding: const EdgeInsets.fromLTRB(22, 12, 22, 32), children: [
         Text('Du temps pour\napprendre.', style: Theme.of(context).textTheme.headlineLarge),
@@ -127,13 +151,15 @@ class _RevisionScreenState extends State<RevisionScreen> {
         Text('Semaine du ${DateFormat('d MMMM yyyy', 'fr').format(schedule.weekStart)} · ${schedule.className}',
           style: const TextStyle(color: muted)),
         const SizedBox(height: 24),
-        if (schedule.isDemo) const Card(child: Padding(padding: EdgeInsets.all(22),
+        if (schedule.isDemo && !widget.previewMode) const Card(child: Padding(padding: EdgeInsets.all(22),
           child: Text('Importez puis validez votre vrai emploi du temps pour générer vos créneaux de révision. Aucun rappel ne part du planning DÉMO.')))
         else if (loading) const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
         else ...[
+          if (widget.previewMode) const Card(child: Padding(padding: EdgeInsets.all(16),
+            child: Text('DÉMO : séances et fréquences fictives. Aucun fichier, compte, stockage ou rappel réel.'))),
           if (expired) const Card(child: Padding(padding: EdgeInsets.all(18),
             child: Text('Cette semaine est terminée. Importez un nouvel emploi du temps pour programmer de nouvelles séances.'))),
-          if (!permission && !expired && reminders.isAndroid && !reminders.nativeMissing)
+          if (!widget.previewMode && !permission && !expired && reminders.isAndroid && !reminders.nativeMissing)
             Container(padding: const EdgeInsets.all(17), decoration: BoxDecoration(color: mint, borderRadius: BorderRadius.circular(18)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 const Text('Rappels désactivés', style: TextStyle(color: ink, fontWeight: FontWeight.w800)),
@@ -144,15 +170,25 @@ class _RevisionScreenState extends State<RevisionScreen> {
                 TextButton.icon(onPressed: enableReminders, icon: const Icon(Icons.notifications_active_outlined),
                   label: const Text('Activer les rappels')),
               ])),
-          if (!reminders.isAndroid && !expired)
+          if (!widget.previewMode && !reminders.isAndroid && !expired)
             const Card(child: Padding(padding: EdgeInsets.all(18),
               child: Text('Les révisions restent consultables ici. Les notifications locales nécessitent l’application Android.'))),
-          if (reminders.nativeMissing && !expired)
+          if (!widget.previewMode && reminders.nativeMissing && !expired)
             const Card(child: Padding(padding: EdgeInsets.all(18),
               child: Text('Le module Android des notifications est absent de cette installation. Fermez l’application et reconstruisez-la depuis mobile/ avec flutter clean, flutter pub get puis flutter run. Un hot reload ne recharge pas le code natif.'))),
           if (reminderWarning != null) Padding(padding: const EdgeInsets.only(top: 12),
             child: Text(reminderWarning!, style: const TextStyle(color: Colors.orange))),
-          if (permission && !expired) TextButton.icon(
+          if (!widget.previewMode && permission && !expired) Column(children: [
+            TextButton.icon(onPressed: () async {
+              try {
+                final when = await reminders.scheduleTest();
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('Rappel d’essai prévu vers ${DateFormat('HH:mm:ss').format(when)}. Verrouillez le téléphone et attendez.')));
+              } catch (e) {
+                if (mounted) setState(() => error = 'Test différé impossible : $e');
+              }
+            }, icon: const Icon(Icons.schedule_rounded), label: const Text('Tester un rappel dans 1 minute')),
+            TextButton.icon(
             onPressed: () async {
               try {
                 await reminders.testNotification();
@@ -161,7 +197,8 @@ class _RevisionScreenState extends State<RevisionScreen> {
               }
             },
             icon: const Icon(Icons.notifications_outlined),
-            label: const Text('Tester une notification locale')),
+            label: const Text('Tester une notification immédiate')),
+          ]),
           if (error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(error!,
             style: const TextStyle(color: Colors.red))),
           const SizedBox(height: 17),

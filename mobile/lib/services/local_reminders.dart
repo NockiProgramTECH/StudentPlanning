@@ -64,6 +64,20 @@ class LocalReminders {
     }
   }
 
+  /// Schedules a one-off diagnostic one minute from now; no SQLite changes.
+  Future<DateTime> scheduleTest() async {
+    if (!isAndroid) throw UnsupportedError('Notifications disponibles uniquement sur Android.');
+    if (nativeMissing) throw _rebuildRequired;
+    try {
+      final at = await _channel.invokeMethod<int>('scheduleTest');
+      if (at == null) throw StateError('Date du test manquante.');
+      return DateTime.fromMillisecondsSinceEpoch(at);
+    } on MissingPluginException {
+      nativeMissing = true;
+      throw _rebuildRequired;
+    }
+  }
+
   Future<void> replaceForWeek(Schedule schedule, List<RevisionSession> sessions) async {
     if (!isAndroid) return;
     if (nativeMissing) throw _rebuildRequired;

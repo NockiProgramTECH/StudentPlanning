@@ -7,6 +7,7 @@ import '../screens/home_screen.dart';
 import '../screens/import_screen.dart';
 import '../screens/planning_screen.dart';
 import '../screens/review_screen.dart';
+import '../screens/revision_screen.dart';
 import '../services/schedule_store.dart';
 
 /// Gallery of actual Flutter screens. No backend call or SQLite write in preview.
@@ -39,6 +40,8 @@ class MockupGallery extends StatelessWidget {
         ComparisonScreen(changes: changes, isDemo: true)),
       ('06', 'Historique', Icons.history_rounded,
         HistoryScreen(schedules: [current, demoPrevious(now)], isDemo: true)),
+      ('07', 'Révisions', Icons.menu_book_outlined,
+        RevisionScreen(schedule: current, store: ScheduleStore(), previewMode: true)),
     ];
     return Scaffold(appBar: AppBar(title: const Text('Studia · Maquettes'), backgroundColor: canvas),
       body: ListView(padding: const EdgeInsets.fromLTRB(22, 12, 22, 30), children: [
@@ -48,7 +51,7 @@ class MockupGallery extends StatelessWidget {
             SizedBox(height: 10),
             Text('Votre planning,\nsans effort.', style: TextStyle(color: Colors.white, fontSize: 27, height: 1.16, fontWeight: FontWeight.w800)),
             SizedBox(height: 10),
-            Text('Explorez les 6 écrans de la maquette. Tout est fictif : aucun PDF, réseau ou enregistrement.',
+            Text('Explorez les 7 écrans de la maquette. Tout est fictif : aucun PDF, réseau ou enregistrement.',
               style: TextStyle(color: Color(0xFFBECED0), height: 1.5)),
           ])),
         const SizedBox(height: 25),
