@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
 import '../models/course_material.dart';
@@ -11,17 +12,51 @@ class ScheduleStore {
 
   Future<Database> get database async => _database ??= await openDatabase(
     path.join(await getDatabasesPath(), 'student_planning.db'),
-    version: 3,
+    version: 4,
     onCreate: (db, version) async {
       await db.execute('CREATE TABLE schedules (class_name TEXT NOT NULL, week_start TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(class_name, week_start))');
       await _createRevisions(db);
       await _createCoursePacks(db);
+      await _createStudentAccess(db);
     },
     onUpgrade: (db, oldVersion, newVersion) async {
       if (oldVersion < 2) await _createRevisions(db);
       if (oldVersion < 3) await _createCoursePacks(db);
+      if (oldVersion < 4) await _createStudentAccess(db);
     },
   );
+
+  static Future<void> _createStudentAccess(Database db) async {
+    await db.execute('CREATE TABLE IF NOT EXISTS student_access (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+  }
+
+  Future<String> deviceIdentifier() async {
+    final db = await database;
+    return db.transaction((txn) async {
+      final rows = await txn.query('student_access', where: 'key = ?', whereArgs: ['device']);
+      if (rows.isNotEmpty) return rows.first['value'] as String;
+      final random = Random.secure();
+      final id = List.generate(32, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+      await txn.insert('student_access', {'key': 'device', 'value': id});
+      return id;
+    });
+  }
+
+  Future<String?> studentAccessToken(String server) async {
+    final rows = await (await database).query('student_access',
+        where: 'key = ?', whereArgs: ['token:$server']);
+    return rows.isEmpty ? null : rows.first['value'] as String;
+  }
+
+  Future<void> saveStudentAccessToken(String server, String? token) async {
+    final db = await database;
+    if (token == null) {
+      await db.delete('student_access', where: 'key = ?', whereArgs: ['token:$server']);
+    } else {
+      await db.insert('student_access', {'key': 'token:$server', 'value': token},
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+  }
 
   static Future<void> _createRevisions(Database db) async {
     await db.execute('CREATE TABLE revisions (id INTEGER PRIMARY KEY, class_name TEXT NOT NULL, week_start TEXT NOT NULL, subject TEXT NOT NULL, start_at TEXT NOT NULL, end_at TEXT NOT NULL, completed INTEGER NOT NULL DEFAULT 0)');

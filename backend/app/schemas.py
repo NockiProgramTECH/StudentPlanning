@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, Field, field_validator, model_validator
 
 
 class Course(BaseModel):
@@ -167,7 +167,8 @@ class QuotaStatus(BaseModel):
 
 
 class LicenseActivationRequest(BaseModel):
-    license_key: str = Field(min_length=6, max_length=160)
+    license_key: str = Field(min_length=6, max_length=254,
+                             validation_alias=AliasChoices("access_code", "license_key", "email"))
     device_identifier: str | None = Field(default=None, max_length=255)
 
 

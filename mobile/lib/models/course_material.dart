@@ -267,7 +267,7 @@ class CourseDocumentModel {
   }
 }
 
-class LicenseActivationModel {
+class AccessActivationModel {
   final bool valid;
   final String studentId;
   final String accessToken;
@@ -283,7 +283,7 @@ class LicenseActivationModel {
   final int quizRequestsToday;
   final int maxQuizRequestsPerDay;
 
-  const LicenseActivationModel({
+  const AccessActivationModel({
     required this.valid,
     required this.studentId,
     required this.accessToken,
@@ -300,9 +300,9 @@ class LicenseActivationModel {
     this.maxQuizRequestsPerDay = 20,
   });
 
-  factory LicenseActivationModel.fromJson(Map<String, dynamic> json) {
+  factory AccessActivationModel.fromJson(Map<String, dynamic> json) {
     final quota = (json['quota'] as Map<String, dynamic>?) ?? const {};
-    return LicenseActivationModel(
+    return AccessActivationModel(
       valid: json['valid'] as bool? ?? true,
       studentId: json['student_id'] as String? ?? '',
       accessToken: json['access_token'] as String? ?? '',

@@ -1,0 +1,13 @@
+{
+  "name": "studia-vitrine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vitrine éditoriale et démo interactive du projet Studia pour les étudiants",
+  "scripts": {
+    "start": "python3 -m http.server 4173 --bind 0.0.0.0",
+    "test": "node --test tests/*.test.cjs"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0"
+  }
+}

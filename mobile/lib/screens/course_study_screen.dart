@@ -6,6 +6,7 @@ import '../models/course_material.dart';
 import '../services/course_study_api.dart';
 import '../services/planning_api.dart';
 import '../services/schedule_store.dart';
+import '../services/student_portal.dart';
 import '../theme.dart';
 
 class CourseStudyScreen extends StatefulWidget {
@@ -26,7 +27,7 @@ class CourseStudyScreen extends StatefulWidget {
   State<CourseStudyScreen> createState() => _CourseStudyScreenState();
 }
 
-class _CourseStudyScreenState extends State<CourseStudyScreen> {
+class _CourseStudyScreenState extends State<CourseStudyScreen> with WidgetsBindingObserver {
   late final CourseStudyApi _api = widget.api ?? CourseStudyApi();
   late final TextEditingController _tokenController = TextEditingController();
   late final TextEditingController _subjectController = TextEditingController(
@@ -37,7 +38,9 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
 
   List<CourseDocumentModel> _documents = [];
   CourseDocumentModel? _activeDocument;
-  LicenseActivationModel? _licenseInfo;
+  StudentAccessConfig? _accessConfig;
+  bool _refreshingAccess = false;
+  bool _portalOpened = false;
   String? _activeAccessToken;
   int _selectedSectionIndex = 0;
   Uint8List? _pdfBytes;
@@ -46,16 +49,20 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
   bool _busyAction = false;
   String? _error;
 
-  String get _effectiveToken => (_activeAccessToken ?? _tokenController.text).trim();
+  String get _effectiveToken => (_activeAccessToken ?? '').trim();
+  bool get _hasAccess => _accessConfig != null &&
+      (_accessConfig!.freeAccess || _effectiveToken.isNotEmpty);
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadDocuments();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tokenController.dispose();
     _subjectController.dispose();
     super.dispose();
@@ -76,6 +83,7 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
     }
     try {
       final stored = await widget.store.courseDocuments();
+      await _refreshAccess();
       if (mounted) {
         setState(() {
           _documents = stored;
@@ -88,9 +96,70 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
       if (mounted) {
         setState(() {
           _loading = false;
+          _error = 'Impossible de charger l’espace étudiant sur cet appareil.';
         });
       }
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _portalOpened) {
+      _portalOpened = false;
+      _refreshAccess();
+    }
+  }
+
+  Future<void> _refreshAccess() async {
+    if (widget.previewMode || _refreshingAccess) return;
+    _refreshingAccess = true;
+    try {
+      _api.deviceIdentifier = await widget.store.deviceIdentifier();
+      final config = await _api.accessConfig();
+      var token = await widget.store.studentAccessToken(_api.baseUrl);
+      if (!config.freeAccess && token != null) {
+        try {
+          await _api.checkAccess(token);
+        } on CourseApiException catch (e) {
+          if (e.statusCode != 401 && e.statusCode != 403) rethrow;
+          await widget.store.saveStudentAccessToken(_api.baseUrl, null);
+          token = null;
+        }
+      }
+      if (mounted) setState(() {
+        _accessConfig = config;
+        _activeAccessToken = token;
+        _error = null;
+      });
+    } catch (_) {
+      if (mounted) setState(() {
+        _accessConfig = null; // Offline/invalid config must never imply free access.
+        _error = 'Espace étudiant indisponible. Vérifiez votre connexion puis réessayez.';
+      });
+    } finally {
+      _refreshingAccess = false;
+    }
+  }
+
+  Future<void> _openPortal() async {
+    final config = _accessConfig;
+    if (config == null) return;
+    try {
+      _portalOpened = true;
+      await StudentPortal.open(apiUri(_api.baseUrl, config.portalPath));
+    } catch (_) {
+      _portalOpened = false;
+      if (mounted) setState(() => _error = 'Impossible d’ouvrir le portail étudiant dans le navigateur.');
+    }
+  }
+
+  Future<void> _handleAccessError(Object error) async {
+    if (error is CourseApiException && (error.statusCode == 401 || error.statusCode == 403)) {
+      await widget.store.saveStudentAccessToken(_api.baseUrl, null);
+      if (mounted) setState(() => _activeAccessToken = null);
+      await _refreshAccess();
+    }
+    if (mounted) setState(() => _error = formatApiError(error));
   }
 
   Future<void> _pickCoursePdf() async {
@@ -117,11 +186,11 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
     }
   }
 
-  Future<void> _activateLicenseKey() async {
+  Future<void> _finalizeAccess() async {
     if (widget.previewMode) return;
     final key = _tokenController.text.trim();
     if (key.isEmpty) {
-      setState(() => _error = 'Saisissez votre clé de licence Chariow (ou jeton pilote) avant de l’activer.');
+      setState(() => _error = 'Saisissez votre code d’accès ou e-mail étudiant.');
       return;
     }
     setState(() {
@@ -129,18 +198,20 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
       _error = null;
     });
     try {
-      final info = await _api.activateLicense(
-        licenseKey: key,
-        deviceIdentifier: 'studia-android-l2-sir',
+      final info = await _api.activateAccess(
+        accessCode: key,
+        deviceIdentifier: _api.deviceIdentifier,
       );
-      if (mounted) {
-        setState(() {
-          _licenseInfo = info;
-          _activeAccessToken = info.accessToken.isNotEmpty ? info.accessToken : key;
-        });
+      if (!info.valid || info.status != 'active' || info.accessToken.isEmpty) {
+        throw StateError('Accès étudiant non reconnu.');
       }
+      await widget.store.saveStudentAccessToken(_api.baseUrl, info.accessToken);
+      if (mounted) setState(() {
+        _activeAccessToken = info.accessToken;
+        _tokenController.clear();
+      });
     } catch (e) {
-      if (mounted) setState(() => _error = formatApiError(e));
+      await _handleAccessError(e);
     } finally {
       if (mounted) setState(() => _busyAction = false);
     }
@@ -156,8 +227,8 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
       setState(() => _error = 'Indiquez la matière du support de cours.');
       return;
     }
-    if (_effectiveToken.isEmpty) {
-      setState(() => _error = 'Saisissez ou activez votre licence Chariow pour utiliser cette fonction.');
+    if (!_hasAccess) {
+      setState(() => _error = 'Finalisez votre accès étudiant pour importer ce support.');
       return;
     }
     setState(() {
@@ -183,7 +254,7 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _error = formatApiError(e));
+      await _handleAccessError(e);
     } finally {
       if (mounted) setState(() => _busyAction = false);
     }
@@ -216,8 +287,8 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
       return;
     }
 
-    if (_effectiveToken.isEmpty) {
-      setState(() => _error = 'Saisissez ou activez votre licence Chariow pour générer les questions de cette section.');
+    if (!_hasAccess) {
+      setState(() => _error = 'Finalisez votre accès étudiant pour générer les questions.');
       return;
     }
     setState(() {
@@ -246,7 +317,7 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _error = formatApiError(e));
+      await _handleAccessError(e);
     } finally {
       if (mounted) setState(() => _busyAction = false);
     }
@@ -260,7 +331,7 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
     var explanation = question.explanation;
     var sourcePage = question.sourcePage;
 
-    if (!widget.previewMode && _effectiveToken.isNotEmpty) {
+    if (!widget.previewMode && _hasAccess) {
       try {
         final evaluation = await _api.submitAnswer(
           accessToken: _effectiveToken,
@@ -325,8 +396,8 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
                   const SizedBox(height: 8),
                   Text(
                     widget.previewMode
-                        ? 'DÉMO : aperçu fictif du module payant (extraction par sections, QCM progressif et références aux pages).'
-                        : 'Importez un support de cours PDF (max 10 Mo, 30 pages). Les questions sont générées progressivement par section sur le serveur avec quotas de coût.',
+                        ? 'DÉMO : aperçu fictif de l’espace étudiant (extraction par sections, QCM progressif et références aux pages).'
+                        : 'Importez un support de cours PDF (max 10 Mo, 30 pages). Les questions sont générées progressivement par section sur le serveur avec quotas d’utilisation.',
                     style: const TextStyle(color: muted, height: 1.5),
                   ),
                   if (!widget.previewMode) ...[
@@ -341,75 +412,63 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'LICENCE CHARIOW & IMPORT DE SUPPORT DE COURS',
-                            style: TextStyle(color: teal, fontWeight: FontWeight.w800, fontSize: 11, letterSpacing: 1.1),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _tokenController,
-                                  obscureText: true,
-                                  enabled: !_busyAction,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Clé de licence Chariow (ou jeton pilote)',
-                                    hintText: 'Ex: ABCD-1234-EFGH-5678',
-                                    prefixIcon: Icon(Icons.vpn_key_outlined),
-                                  ),
-                                ),
+                          const Text('Espace étudiant L2 SIR',
+                              style: TextStyle(fontWeight: FontWeight.w800)),
+                          if (_accessConfig == null) ...[
+                            const SizedBox(height: 12),
+                            OutlinedButton(onPressed: _refreshAccess,
+                                child: const Text('Réessayer')),
+                          ] else if (!_accessConfig!.freeAccess && !_hasAccess) ...[
+                            const SizedBox(height: 12),
+                            FilledButton.icon(
+                              onPressed: _busyAction ? null : _openPortal,
+                              icon: const Icon(Icons.open_in_new),
+                              label: const Text('Ouvrir le portail étudiant'),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _tokenController,
+                              enabled: !_busyAction,
+                              autocorrect: false,
+                              decoration: const InputDecoration(
+                                labelText: "Code d'accès ou e-mail étudiant",
+                                prefixIcon: Icon(Icons.school_outlined),
                               ),
-                              const SizedBox(width: 10),
-                              OutlinedButton(
-                                onPressed: _busyAction ? null : _activateLicenseKey,
-                                child: const Text('Activer'),
-                              ),
-                            ],
-                          ),
-                          if (_licenseInfo != null) ...[
+                            ),
                             const SizedBox(height: 10),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: mint,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                'Licence ${_licenseInfo!.maskedKey} active'
-                                '${_licenseInfo!.productName != null ? ' · ${_licenseInfo!.productName}' : ''}'
-                                ' · Quotas jour : ${_licenseInfo!.documentsToday}/${_licenseInfo!.maxDocumentsPerDay} PDF, '
-                                '${_licenseInfo!.quizRequestsToday}/${_licenseInfo!.maxQuizRequestsPerDay} quiz',
-                                style: const TextStyle(color: teal, fontSize: 12, fontWeight: FontWeight.w700),
-                              ),
+                            OutlinedButton(
+                              onPressed: _busyAction ? null : _finalizeAccess,
+                              child: const Text('Finaliser mon accès'),
                             ),
                           ],
-                          const SizedBox(height: 10),
-                          TextField(
-                            controller: _subjectController,
-                            enabled: !_busyAction,
-                            decoration: const InputDecoration(
-                              labelText: 'Matière L2 SIR',
-                              prefixIcon: Icon(Icons.menu_book_outlined),
+                          if (_hasAccess) ...[
+                            const SizedBox(height: 10),
+                            TextField(
+                              controller: _subjectController,
+                              enabled: !_busyAction,
+                              decoration: const InputDecoration(
+                                labelText: 'Matière L2 SIR',
+                                prefixIcon: Icon(Icons.menu_book_outlined),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _busyAction ? null : _pickCoursePdf,
-                                  icon: const Icon(Icons.upload_file_outlined),
-                                  label: Text(_pdfFilename ?? 'Choisir un PDF de cours'),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: _busyAction ? null : _pickCoursePdf,
+                                    icon: const Icon(Icons.upload_file_outlined),
+                                    label: Text(_pdfFilename ?? 'Choisir un PDF de cours'),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              FilledButton(
-                                onPressed: _busyAction ? null : _importCourseSupport,
-                                child: Text(_busyAction ? 'Import…' : 'Découper'),
-                              ),
-                            ],
-                          ),
+                                const SizedBox(width: 10),
+                                FilledButton(
+                                  onPressed: _busyAction ? null : _importCourseSupport,
+                                  child: Text(_busyAction ? 'Import…' : 'Découper'),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -499,7 +558,7 @@ class _CourseStudyScreenState extends State<CourseStudyScreen> {
                             ),
                           ),
                           FilledButton.tonalIcon(
-                            onPressed: _busyAction
+                            onPressed: _busyAction || (!widget.previewMode && !_hasAccess)
                                 ? null
                                 : () => _generateSectionQuiz(
                                       currentSection.index,

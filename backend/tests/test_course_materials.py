@@ -7,13 +7,15 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.course_materials import MAX_COURSE_PAGES, extract_course_pdf
-from app.course_quiz import _LLMQuestionItem
+from app.course_quiz import CourseStore, _LLMQuestionItem
+from app.chariow import normalize_chariow_license_data
 from app.main import app
 
 client = TestClient(app)
 TIMETABLE_PDF = Path(__file__).with_name("Emploi_temps_12 -17-oct 2026.pdf")
-VALID_TOKEN = "token_pilote_l2_sir_2026"
-AUTH_HEADER = {"Authorization": f"Bearer {VALID_TOKEN}"}
+VALID_TOKEN = "verified_course_test_key"
+DEVICE_ID = "device_course_test_123456"
+AUTH_HEADER = {"Authorization": f"Bearer {VALID_TOKEN}", "X-Device-Identifier": DEVICE_ID}
 
 
 def make_course_pdf(chapters: list[tuple[str, list[str]]]) -> bytes:
@@ -31,11 +33,16 @@ def make_course_pdf(chapters: list[tuple[str, list[str]]]) -> bytes:
     return data
 
 
-@pytest.fixture()
-def configured_course_env(monkeypatch, tmp_path):
+@pytest.fixture(params=["false", "true"], ids=["controlled", "free"])
+def configured_course_env(monkeypatch, tmp_path, request):
     db_file = tmp_path / "test_courses.sqlite3"
     monkeypatch.setenv("STUDIA_DB_PATH", str(db_file))
-    monkeypatch.setenv("STUDIA_ACCESS_TOKENS", f"etudiant_l2sir:{VALID_TOKEN}")
+    monkeypatch.setenv("STUDIA_FREE_ACCESS", request.param)
+    monkeypatch.setenv("CHARIOW_API_KEY", "server_test_key")
+    monkeypatch.setenv("CHARIOW_PULSE_SECRET", "server_test_secret")
+    CourseStore().upsert_chariow_license(normalize_chariow_license_data({
+        "status": "active", "product": {"id": "prd_mrrhb8h2"},
+    }, VALID_TOKEN))
     monkeypatch.setenv("STUDIA_MAX_DOCS_PER_DAY", "3")
     monkeypatch.setenv("STUDIA_MAX_QUIZ_REQUESTS_PER_DAY", "4")
     monkeypatch.setenv("STUDIA_MAX_TOKENS_PER_DAY", "10000")
@@ -49,14 +56,20 @@ def test_course_endpoints_require_server_configuration_and_valid_bearer_token(mo
     unconfigured = client.get("/api/courses/quota")
     assert unconfigured.status_code == 503
 
+    monkeypatch.setenv("CHARIOW_API_KEY", "server_test_key")
+    monkeypatch.setenv("CHARIOW_PULSE_SECRET", "server_test_secret")
+    # Legacy pilot credentials can no longer bypass the mandatory verification.
     monkeypatch.setenv("STUDIA_ACCESS_TOKENS", f"etudiant_l2sir:{VALID_TOKEN}")
     missing = client.get("/api/courses/quota")
     assert missing.status_code == 401
-    wrong = client.get("/api/courses/quota", headers={"Authorization": "Bearer mauvais_jeton_12345"})
+    wrong = client.get("/api/courses/quota", headers=AUTH_HEADER)
     assert wrong.status_code == 401
-    ok = client.get("/api/courses/quota", headers=AUTH_HEADER)
+    record = CourseStore().upsert_chariow_license(normalize_chariow_license_data({
+        "status": "active", "product": {"id": "prd_mrrhb8h2"},
+    }, VALID_TOKEN))
+    ok = client.get("/api/courses/quota", headers={"Authorization": f"Bearer {record['access_token']}"})
     assert ok.status_code == 200
-    assert ok.json()["student_id"] == "etudiant_l2sir"
+    assert ok.json()["student_id"] == record["student_id"]
 
 
 def test_timetable_pdf_is_rejected_by_course_material_importer(configured_course_env):

@@ -4,6 +4,17 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// Codemagic injects these variables from its private Android signing identity.
+// No credentials, keystore or generated signing properties are committed.
+def ciKeystorePath = System.getenv("CM_KEYSTORE_PATH")
+if (ciKeystorePath) {
+    ["CM_KEYSTORE_PASSWORD", "CM_KEY_ALIAS", "CM_KEY_PASSWORD"].each { name ->
+        if (!System.getenv(name)) {
+            throw new GradleException("Missing Android signing variable: " + name)
+        }
+    }
+}
+
 android {
     namespace "com.studentplanning.studia"
     compileSdk flutter.compileSdkVersion
@@ -21,6 +32,25 @@ android {
         versionCode flutter.versionCode
         versionName flutter.versionName
     }
-    // Configure a dedicated release keystore before publishing to a store.
+    signingConfigs {
+        if (ciKeystorePath) {
+            release {
+                storeFile file(ciKeystorePath)
+                storePassword System.getenv("CM_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("CM_KEY_ALIAS")
+                keyPassword System.getenv("CM_KEY_PASSWORD")
+            }
+        }
+    }
+    buildTypes {
+        release {
+            // Never fall back to a debug key for release artifacts.
+            if (ciKeystorePath) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+    // Without a private signing identity, local release builds remain unsigned.
+    // The Codemagic beta workflow explicitly refuses to proceed in that case.
 }
 flutter { source "../.." }

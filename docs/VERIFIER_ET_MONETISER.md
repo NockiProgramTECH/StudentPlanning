@@ -48,7 +48,7 @@ Pour distribuer : configurer d'abord une **signature release** (keystore privé,
 
 Conserver gratuitement l'import/validation du planning, les révisions locales et les rappels. Facturer une valeur mesurable, par exemple analyse PDF améliorée, recommandations personnalisées ou synchronisation multi-appareils. Ne pas promettre « IA illimitée à vie » : chaque requête coûte des tokens ; calculer prix et quotas avec les coûts du modèle, commissions, charge serveur et support. Exemple **à ajuster après mesure** : forfait mensuel avec N analyses PDF et un budget maximal de tokens, puis blocage ou recharge explicite.
 
-### OpenRouter : proposition d'architecture, non intégrée
+### OpenRouter : intégré pour les supports et quiz, à encadrer avant ouverture publique
 
 `Flutter → FastAPI (authentification, quotas, validation des entrées) → OpenRouter (modèle choisi côté serveur) → validation JSON du résultat → écran de vérification humaine → stockage local seulement après validation`. Garder `OPENROUTER_API_KEY` dans l'environnement du **backend uniquement**, jamais dans l'APK ou le dépôt. Mettre un plafond de coût par utilisateur, des délais d'attente, une limite de taille et de fréquence de PDF, et traiter 402/429/5xx sans perdre le planning local. Avant de transmettre un emploi du temps étudiant : consentement, minimisation du contenu et vérification de la politique de confidentialité du modèle/fournisseur choisi. Le calcul des révisions et les rappels locaux n'ont pas besoin d'IA.
 
@@ -59,7 +59,9 @@ L'intégration Chariow est implémentée dans `backend/app/chariow.py`, `backend
 1. **Secrets strictement côté serveur FastAPI** (jamais dans Flutter ni dans Git) :
    - `CHARIOW_API_KEY=sk_live_...` (Settings → API Keys)
    - `CHARIOW_PULSE_SECRET=whsec_...` (Pulses → Signing secret)
-   - `CHARIOW_PRODUCT_ID=prd_...` (optionnel : restreint l'activation à votre produit Studia L2 SIR)
+   - `CHARIOW_PRODUCT_ID=prd_mrrhb8h2` (restriction obligatoire, valeur par défaut)
+   - `CHARIOW_STORE_DOMAIN=https://camfbzgd.mychariow.co` (destination HTTPS du portail)
+   - `STUDIA_FREE_ACCESS=false` pour exiger cette vérification ; `true` masque le bloc d'accès Flutter tout en conservant les quotas par installation.
 2. **Activation et vérification de licence (`POST /api/licenses/activate`)** :
    - Interroge `GET https://api.chariow.com/v1/licenses/{licenseKey}` puis, si le statut est `pending_activation` ou qu'un nouvel `device_identifier` est présenté, appelle `POST https://api.chariow.com/v1/licenses/{licenseKey}/activate`.
    - Enregistre l'état de la licence dans SQLite (`chariow_licenses`) et délivre un jeton serveur (`studia_lic_...`) utilisable dans `Authorization: Bearer <token>` sur `/api/courses/*`.
@@ -71,3 +73,28 @@ L'intégration Chariow est implémentée dans `backend/app/chariow.py`, `backend
 Une vente directe d'APK peut utiliser un paiement externe sous réserve des obligations locales (factures, taxes, remboursements, données). **Sur Google Play**, les achats numériques dans l'application relèvent en général de Google Play Billing, avec exceptions/programmes et pays spécifiques : ne pas intégrer un lien d'achat Chariow in-app sans vérifier la politique qui s'applique à votre distribution. Chariow annonce publiquement une commission (actuellement 15 % selon sa page tarifaire) ; confirmer les conditions et frais applicables à votre compte avant de fixer un tarif.
 
 Références : [OpenRouter authentification](https://openrouter.ai/docs/api_reference/authentication), [limites OpenRouter](https://openrouter.ai/docs/api_reference/limits), [Chariow : créer un produit licence](https://help.chariow.com/fr/articles/121-creer-un-produit-sur-chariow), [API Chariow](https://chariow.dev/api-reference/introduction), [Sécurité Pulse Chariow](https://chariow.dev/en/guides/pulse-security), [tarifs Chariow](https://chariow.com/fr/pricing), [politique Google Play](https://support.google.com/googleplay/android-developer/answer/10281818?hl=en).
+
+
+### Acceptation du pilotage d'accès serveur
+
+Voir [la configuration et les limites de sécurité](DEPLOY_API.md#pilotage-de-lespace-etudiant-l2-sir).
+Vérifier sur un build complet Android (pas seulement un hot reload) :
+
+1. `STUDIA_FREE_ACCESS=true` : aucun code, champ d'accès ni bouton portail ; importer un
+   support L2 SIR puis générer une section. Relancer l'app : même identifiant et mêmes quotas.
+2. `false` sans accès sauvegardé : **Espace étudiant L2 SIR**, **Ouvrir le portail étudiant**,
+   **Code d'accès ou e-mail étudiant**, **Finaliser mon accès**. Le navigateur externe reçoit
+   la route backend, suivie d'une redirection 302 ; aucune URL boutique embarquée dans Dart.
+3. Revenir, finaliser avec un code valide ou un e-mail reçu dans un Pulse signé, puis
+   relancer : l'accès est restauré depuis SQLite sans demander à nouveau le code.
+4. Expirer/révoquer l'accès : les opérations serveur sont bloquées et le bloc d'accès revient.
+   Une panne réseau ne doit ni effacer le jeton ni débloquer silencieusement le module.
+5. Vérifier la migration SQLite v3 → v4 avec un planning déjà enregistré ; ne pas désinstaller
+   pour tester la migration. Les tests widgets utilisent un stockage simulé : la migration
+   réelle et les intentions Android nécessitent ce contrôle sur appareil.
+
+Le test `mobile/tools/test_brand_assets.py` parcourt récursivement tous les fichiers Dart
+sous `mobile/lib/`, contrôle les mots interdits et les motifs usuels de secrets, ainsi que
+le câblage natif du portail. Cela ne remplace ni une revue des secrets arbitraires, ni la
+validation des règles de distribution. Les messages d'erreur serveur du module ne sont
+pas affichés bruts dans Flutter.

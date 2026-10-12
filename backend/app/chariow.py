@@ -16,6 +16,7 @@ import os
 from urllib.parse import quote
 
 import httpx
+from .access import product_id
 
 DEFAULT_CHARIOW_BASE_URL = "https://api.chariow.com/v1"
 
@@ -71,9 +72,7 @@ def _extract_license_key(data: dict, fallback: str) -> str:
 
 
 def _check_product_restriction(data: dict) -> None:
-    expected_product = os.getenv("CHARIOW_PRODUCT_ID", "").strip()
-    if not expected_product:
-        return
+    expected_product = product_id()
     product = data.get("product") or {}
     prod_id = str(product.get("id") or "")
     prod_slug = str(product.get("slug") or "")
@@ -254,6 +253,7 @@ def normalize_chariow_license_data(data: dict, fallback_key: str) -> dict:
         "activated_at": data.get("activated_at"),
         "expires_at": expires_at,
         "revoked_at": revoked_at,
+        "customer_email": str((data["customer"].get("email") if isinstance(data.get("customer"), dict) else "") or "").strip().casefold() or None,
         "customer_id": str(customer_id) if customer_id is not None else None,
         "product_id": str(product.get("id") or "") or None,
         "product_name": str(product.get("name") or "") or None,
@@ -275,6 +275,13 @@ async def validate_or_activate_chariow_key(
         raise ChariowLicenseError("Cette licence a été révoquée.", status_code=403)
     if info["is_expired"]:
         raise ChariowLicenseError("Cette licence a expiré.", status_code=403)
+
+    if (device_identifier and not already_activated_on_device
+            and (info["activations_remaining"] == 0 or (
+                info["max_activations"] is not None
+                and info["activation_count"] >= info["max_activations"]
+            ))):
+        raise ChariowLicenseError("Nombre maximal d'appareils atteint.", status_code=403)
 
     if info["status"] == "pending_activation" or (
         device_identifier and not already_activated_on_device and info["can_activate"]

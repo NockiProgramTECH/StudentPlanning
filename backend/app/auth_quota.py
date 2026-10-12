@@ -1,57 +1,17 @@
-"""Authentication and AI cost/usage quotas for paid course-material features.
-
-Supports both:
-- Chariow License API (`CHARIOW_API_KEY`, `GET /v1/licenses/{key}`, `POST /v1/licenses/{key}/activate`)
-  and signed Pulse webhooks (`CHARIOW_PULSE_SECRET`);
-- Server pilot access tokens (`STUDIA_ACCESS_TOKENS`) for controlled university testing.
-"""
+"""Server-controlled course access and AI cost/usage quotas."""
 from __future__ import annotations
 
 import hashlib
-import hmac
 import os
+import re
 from fastapi import Header, HTTPException
 
-from .chariow import ChariowLicenseError, validate_or_activate_chariow_key
-
-MIN_TOKEN_LENGTH = 8
+from .chariow import ChariowLicenseError
+from .access import free_access_enabled, require_chariow_config
 
 
 class QuotaExceededError(Exception):
     pass
-
-
-def configured_pilot_tokens() -> list[tuple[str, str]]:
-    """Parse `STUDIA_ACCESS_TOKENS` (`student_id:secret_token,student2:secret2` or `secret_token`)."""
-    raw = os.getenv("STUDIA_ACCESS_TOKENS", "").strip()
-    if not raw:
-        return []
-    entries: list[tuple[str, str]] = []
-    for item in raw.split(","):
-        part = item.strip()
-        if not part:
-            continue
-        if ":" in part:
-            student_id, token = part.split(":", 1)
-            student_id = student_id.strip()
-            token = token.strip()
-        else:
-            token = part
-            digest = hashlib.sha256(token.encode("utf-8")).hexdigest()[:12]
-            student_id = f"stu_{digest}"
-        if student_id and len(token) >= MIN_TOKEN_LENGTH:
-            entries.append((student_id, token))
-    return entries
-
-
-def match_pilot_token(candidate: str) -> str | None:
-    if not candidate:
-        return None
-    matched: str | None = None
-    for student_id, valid_token in configured_pilot_tokens():
-        if hmac.compare_digest(candidate.encode("utf-8"), valid_token.encode("utf-8")):
-            matched = student_id
-    return matched
 
 
 def extract_bearer_token(
@@ -68,53 +28,29 @@ def extract_bearer_token(
 async def require_student_id(
     authorization: str | None = Header(default=None),
     x_studia_token: str | None = Header(default=None),
+    x_device_identifier: str | None = Header(default=None),
 ) -> str:
-    """FastAPI dependency returning the authenticated student_id or raising 401/403/503."""
     from .course_quiz import CourseStore
 
-    store = CourseStore()
-    pilot_entries = configured_pilot_tokens()
-    has_chariow = bool(os.getenv("CHARIOW_API_KEY", "").strip())
+    if free_access_enabled():
+        device = (x_device_identifier or "").strip()
+        if not re.fullmatch(r"[A-Za-z0-9_-]{16,255}", device):
+            raise HTTPException(422, "Identifiant appareil requis (16 à 255 caractères).")
+        # The same installation keeps the same document ownership and all quotas.
+        return "device_" + hashlib.sha256(device.encode()).hexdigest()
 
-    if not pilot_entries and not has_chariow and not store.has_any_license_records():
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Fonctionnalité supports de cours non activée sur ce serveur "
-                "(CHARIOW_API_KEY et STUDIA_ACCESS_TOKENS non configurés)."
-            ),
-        )
-
+    require_chariow_config()
     candidate = extract_bearer_token(authorization, x_studia_token)
     if not candidate:
-        raise HTTPException(
-            status_code=401,
-            detail="Authentification requise : fournissez une licence Chariow ou un jeton Bearer valide.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    pilot_student = match_pilot_token(candidate)
-    if pilot_student is not None:
-        return pilot_student
-
+        raise HTTPException(401, "Accès étudiant requis.", headers={"WWW-Authenticate": "Bearer"})
     try:
-        cached_student = store.resolve_license_or_token(candidate)
-        if cached_student is not None:
-            return cached_student
-
-        if has_chariow:
-            info = await validate_or_activate_chariow_key(candidate)
-            record = store.upsert_chariow_license(info)
-            return str(record["student_id"])
+        student = CourseStore().resolve_license_or_token(candidate)
+        if student is not None:
+            return student
     except ChariowLicenseError as exc:
-        status = 401 if exc.status_code == 404 else exc.status_code
-        raise HTTPException(status_code=status, detail=exc.detail) from exc
-
-    raise HTTPException(
-        status_code=401,
-        detail="Jeton d'accès ou clé de licence Studia invalide.",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+        raise HTTPException(exc.status_code, "Accès étudiant inactif. Finalisez votre accès.") from exc
+    # Unknown credentials must go through the server activation endpoint, never a pilot bypass.
+    raise HTTPException(401, "Accès étudiant invalide.", headers={"WWW-Authenticate": "Bearer"})
 
 
 def quota_limits() -> dict[str, int | float]:
