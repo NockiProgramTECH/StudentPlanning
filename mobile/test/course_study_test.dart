@@ -27,8 +27,8 @@ void main() {
     expect(updated.progress.nextSectionIndex, 1);
   });
 
-  test('LicenseActivationModel décode la réponse Chariow du serveur', () {
-    final model = LicenseActivationModel.fromJson({
+  test('AccessActivationModel décode la réponse Chariow du serveur', () {
+    final model = AccessActivationModel.fromJson({
       'valid': true,
       'student_id': 'chariow_123456',
       'access_token': 'studia_lic_secret',
@@ -51,8 +51,8 @@ void main() {
     expect(model.activationsRemaining, 1);
     expect(model.maxQuizRequestsPerDay, 20);
     expect(
-      licenseActivationEndpoint('https://api.studia.example', release: true).toString(),
-      'https://api.studia.example/api/licenses/activate',
+      accessActivationEndpoint('https://api.studia.example', release: true).toString(),
+      'https://api.studia.example/api/access/activate',
     );
   });
 }

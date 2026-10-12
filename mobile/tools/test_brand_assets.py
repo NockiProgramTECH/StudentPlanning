@@ -3,7 +3,9 @@
 Run: python -m unittest discover -s mobile/tools -p 'test_*.py'
 """
 from pathlib import Path
+import re
 import struct
+import unicodedata
 import unittest
 import wave
 import xml.etree.ElementTree as ET
@@ -13,7 +15,48 @@ MAIN = RES.parent
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 
 
+def forbidden_mobile_content(content):
+    normalized = unicodedata.normalize("NFKC", content).casefold()
+    words = re.search(r"(?<![^\W\d_])(?:licences?|paiement|payer|acheter|achats?|tarifs?|prix|chariow)(?![^\W\d_])", normalized)
+    secrets = re.search(
+        r"sk[-_]or[-_]|sk_live_|sk_test_|whsec_|sk-proj-|"
+        r"-----begin (?:rsa |ec |openssh )?private key-----|"
+        r"openrouter_api_key|chariow_api_key|chariow_pulse_secret|studia_access_tokens|"
+        r"(?:api[_-]?key|client[_-]?secret)\s*[:=]\s*['\"][^'\"]+",
+        normalized,
+    )
+    return words or secrets
+
+
 class AndroidBrandAssetsTest(unittest.TestCase):
+    def test_academic_vocabulary_and_no_secrets_in_all_dart_sources(self):
+        dart_files = list((Path(__file__).resolve().parents[1] / "lib").rglob("*.dart"))
+        self.assertTrue(dart_files)
+        for path in dart_files:
+            with self.subTest(file=str(path)):
+                self.assertIsNone(forbidden_mobile_content(path.read_text()),
+                                  f"Vocabulaire interdit ou secret potentiel dans {path}")
+
+    def test_vocabulary_and_secret_guard_detects_regressions(self):
+        for text in ("Licence", "LICENCES", "paiement", "payer", "acheter", "achat",
+                     "tarif", "prix", "Chariow", "/api/licenses/activate Chariow",
+                     "sk-or-v1-example", "sk_live_example", "whsec_example",
+                     "OPENROUTER_API_KEY", "apiKey = 'example-secret'",
+                     "-----BEGIN PRIVATE KEY-----"):
+            with self.subTest(text=text):
+                self.assertIsNotNone(forbidden_mobile_content(text))
+        self.assertIsNone(forbidden_mobile_content("Espace étudiant L2 SIR · Finaliser mon accès"))
+
+    def test_external_portal_is_a_native_browser_intent(self):
+        native = (MAIN / "kotlin/com/studentplanning/studia/MainActivity.kt").read_text()
+        dart = (Path(__file__).resolve().parents[1] / "lib/services/student_portal.dart").read_text()
+        for content in (native, dart):
+            self.assertIn("studia/student_portal", content)
+        self.assertIn("Intent.ACTION_VIEW", native)
+        self.assertIn("Intent.CATEGORY_BROWSABLE", native)
+        self.assertIn('uri.scheme != "https"', native)
+        self.assertIn("ActivityNotFoundException", native)
+
     def test_launcher_images_match_android_density_sizes(self):
         for density, size in {"mdpi": 48, "hdpi": 72, "xhdpi": 96,
                               "xxhdpi": 144, "xxxhdpi": 192}.items():

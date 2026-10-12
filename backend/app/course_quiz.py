@@ -14,6 +14,7 @@ import httpx
 from pydantic import BaseModel, Field, ValidationError
 
 from .auth_quota import QuotaExceededError, estimate_cost_usd, quota_limits
+from .access import product_id
 from .chariow import ChariowLicenseError, normalize_chariow_license_data
 from .interpret import InterpretationError
 from .schemas import (
@@ -227,6 +228,12 @@ class CourseStore:
                 );
                 CREATE INDEX IF NOT EXISTS idx_chariow_lic_token
                     ON chariow_licenses(access_token);
+
+                CREATE TABLE IF NOT EXISTS chariow_student_emails (
+                    license_key TEXT PRIMARY KEY,
+                    email TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_chariow_email ON chariow_student_emails(email);
 
                 CREATE TABLE IF NOT EXISTS chariow_pulse_deliveries (
                     delivery_id TEXT PRIMARY KEY,
@@ -609,6 +616,20 @@ class CourseStore:
             ).fetchone()
         return dict(row) if row is not None else None
 
+    def license_key_for_email(self, email: str) -> str | None:
+        with self._connect() as conn:
+            rows = conn.execute(
+                """SELECT l.license_key FROM chariow_student_emails e
+                   JOIN chariow_licenses l ON l.license_key = e.license_key
+                   WHERE e.email = ? AND l.product_id = ?
+                     AND l.is_revoked = 0 AND l.is_expired = 0
+                     AND l.status IN ('active', 'pending_activation')
+                   ORDER BY l.updated_at DESC LIMIT 2""",
+                (email.strip().casefold(), product_id()),
+            ).fetchall()
+        # Ambiguous email matches require the received code instead.
+        return rows[0]["license_key"] if len(rows) == 1 else None
+
     def has_device_activation(self, license_key: str, device_identifier: str | None) -> bool:
         if not device_identifier or not device_identifier.strip():
             return False
@@ -698,6 +719,8 @@ class CourseStore:
             ).fetchone()
         if row is None:
             return None
+        if row["product_id"] != product_id():
+            raise ChariowLicenseError("Offre non reconnue.", status_code=403)
         if int(row["is_revoked"]) == 1 or row["status"] == "revoked":
             raise ChariowLicenseError("Cette licence Chariow a été révoquée.", status_code=403)
         if int(row["is_expired"]) == 1 or row["status"] == "expired":
@@ -748,10 +771,12 @@ class CourseStore:
 
         lic_obj = payload.get("license")
         product_obj = payload.get("product") if isinstance(payload.get("product"), dict) else {}
-        if isinstance(lic_obj, dict):
+        if isinstance(lic_obj, dict) and event in {"license.issued", "license.activated", "license.expired", "license.revoked"}:
             merged = {**lic_obj}
             if product_obj and "product" not in merged:
                 merged["product"] = product_obj
+            if "customer" not in merged and isinstance(payload.get("customer"), dict):
+                merged["customer"] = payload["customer"]
             key = str(merged.get("key") or merged.get("license_key") or merged.get("licence_key") or "").strip()
             if key:
                 info = normalize_chariow_license_data(merged, key)
@@ -767,6 +792,12 @@ class CourseStore:
                     info["is_active"] = False
                     info["is_revoked"] = True
                 self.upsert_chariow_license(info)
+                if info.get("customer_email"):
+                    with self._connect() as conn:
+                        conn.execute(
+                            "INSERT OR REPLACE INTO chariow_student_emails (license_key, email) VALUES (?, ?)",
+                            (key, info["customer_email"]),
+                        )
 
         if clean_delivery is not None:
             with self._connect() as conn:

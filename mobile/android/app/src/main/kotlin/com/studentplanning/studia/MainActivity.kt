@@ -31,6 +31,24 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "studia/student_portal")
+            .setMethodCallHandler { call, result ->
+                if (call.method != "open") {
+                    result.notImplemented()
+                } else {
+                    val uri = (call.arguments as? String)?.let { Uri.parse(it) }
+                    val debug = applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0
+                    if (uri == null || uri.host.isNullOrBlank() || uri.userInfo != null ||
+                        (uri.scheme != "https" && !(debug && uri.scheme == "http"))) {
+                        result.error("url", "Adresse du portail invalide", null)
+                    } else try {
+                        startActivity(Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE))
+                        result.success(null)
+                    } catch (e: android.content.ActivityNotFoundException) {
+                        result.error("browser", "Aucun navigateur disponible", null)
+                    }
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "hasPermission" -> result.success(allowed(this))

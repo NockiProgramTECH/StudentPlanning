@@ -8,46 +8,81 @@ import 'planning_api.dart';
 Uri courseEndpoint(String baseUrl, String subPath, {bool release = kReleaseMode}) =>
     apiUri(baseUrl, '/api/courses$subPath', release: release);
 
-Uri licenseActivationEndpoint(String baseUrl, {bool release = kReleaseMode}) =>
-    apiUri(baseUrl, '/api/licenses/activate', release: release);
+Uri accessActivationEndpoint(String baseUrl, {bool release = kReleaseMode}) =>
+    apiUri(baseUrl, '/api/access/activate', release: release);
+
+class StudentAccessConfig {
+  final bool freeAccess;
+  final String portalPath;
+  const StudentAccessConfig({required this.freeAccess, required this.portalPath});
+}
+
+class CourseApiException implements Exception {
+  final int statusCode;
+  final String message;
+  const CourseApiException(this.statusCode, this.message);
+  @override
+  String toString() => message;
+}
 
 class CourseStudyApi {
   final http.Client client;
   final String baseUrl;
+  String? deviceIdentifier;
 
   CourseStudyApi([http.Client? client, this.baseUrl = apiBaseUrl])
       : client = client ?? http.Client();
 
-  Future<LicenseActivationModel> activateLicense({
-    required String licenseKey,
+  Future<StudentAccessConfig> accessConfig() async {
+    final response = await client.get(apiUri(baseUrl, '/api/access/config'))
+        .timeout(const Duration(seconds: 20));
+    final body = _decodeJson(response, 'Configuration de l’espace étudiant indisponible');
+    if (body['free_access'] is! bool || body['portal_url'] != '/api/access/portal') {
+      throw const FormatException('Configuration de l’espace étudiant invalide.');
+    }
+    return StudentAccessConfig(
+      freeAccess: body['free_access'] as bool,
+      portalPath: body['portal_url'] as String,
+    );
+  }
+
+  Future<void> checkAccess(String token) async {
+    final response = await client.get(courseEndpoint(baseUrl, '/quota'),
+        headers: _authHeaders(token)).timeout(const Duration(seconds: 20));
+    _decodeJson(response, 'Accès étudiant indisponible');
+  }
+
+  Future<AccessActivationModel> activateAccess({
+    required String accessCode,
     String? deviceIdentifier,
   }) async {
-    final key = licenseKey.trim();
+    final key = accessCode.trim();
     if (key.isEmpty) {
-      throw StateError('Clé de licence Chariow requise.');
+      throw StateError('Code d’accès ou e-mail étudiant requis.');
     }
-    final payload = <String, dynamic>{'license_key': key};
+    final payload = <String, dynamic>{'access_code': key};
     if (deviceIdentifier != null && deviceIdentifier.trim().isNotEmpty) {
       payload['device_identifier'] = deviceIdentifier.trim();
     }
     final response = await client
         .post(
-          licenseActivationEndpoint(baseUrl),
+          accessActivationEndpoint(baseUrl),
           headers: const {'Content-Type': 'application/json'},
           body: jsonEncode(payload),
         )
         .timeout(const Duration(seconds: 30));
-    final body = _decodeJson(response, 'Activation de la licence Chariow impossible');
-    return LicenseActivationModel.fromJson(body);
+    final body = _decodeJson(response, 'Activation de l’accès impossible');
+    return AccessActivationModel.fromJson(body);
   }
 
   Map<String, String> _authHeaders(String accessToken, {bool jsonBody = false}) {
     final token = accessToken.trim();
-    if (token.isEmpty) {
+    if (token.isEmpty && (deviceIdentifier ?? '').isEmpty) {
       throw StateError('Jeton d’accès Studia requis pour importer ou interroger un support de cours.');
     }
     return {
-      'Authorization': 'Bearer $token',
+      if (token.isNotEmpty) 'Authorization': 'Bearer $token',
+      if (deviceIdentifier != null) 'X-Device-Identifier': deviceIdentifier!,
       if (jsonBody) 'Content-Type': 'application/json',
     };
   }
@@ -60,8 +95,13 @@ class CourseStudyApi {
       throw Exception('Réponse serveur illisible (${response.statusCode}).');
     }
     if (response.statusCode != 200) {
-      final detail = body['detail'];
-      throw Exception(detail is String ? detail : '$fallbackMessage (${response.statusCode}).');
+      // Never render upstream service messages or identifiers in the interface.
+      final message = switch (response.statusCode) {
+        401 || 403 => 'Accès étudiant inactif ou non reconnu. Finalisez votre accès.',
+        429 => 'Quota atteint. Réessayez après le renouvellement de votre quota.',
+        _ => '$fallbackMessage (${response.statusCode}).',
+      };
+      throw CourseApiException(response.statusCode, message);
     }
     return body;
   }

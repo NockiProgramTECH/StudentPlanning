@@ -1,13 +1,13 @@
 from datetime import date
 import json
 from fastapi import Body, Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import ValidationError
-from .auth_quota import QuotaExceededError, match_pilot_token, require_student_id
+from .auth_quota import QuotaExceededError, require_student_id
+from .access import free_access_enabled, portal_url, require_chariow_config
 from .chariow import (
     ChariowConfigError,
     ChariowLicenseError,
-    mask_license_key,
     validate_or_activate_chariow_key,
     verify_chariow_pulse_signature,
 )
@@ -49,6 +49,19 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/api/access/config")
+def access_config():
+    return JSONResponse(
+        {"free_access": free_access_enabled(), "portal_url": "/api/access/portal"},
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@app.get("/api/access/portal")
+def access_portal():
+    return RedirectResponse(portal_url(), status_code=302, headers={"Cache-Control": "no-store"})
 
 
 @app.post("/api/compare")
@@ -253,26 +266,19 @@ def submit_course_answer(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
+@app.post("/api/access/activate", response_model=LicenseActivationResponse)
 @app.post("/api/licenses/activate", response_model=LicenseActivationResponse)
 async def activate_license(
     body: LicenseActivationRequest,
     store: CourseStore = Depends(get_course_store),
 ):
+    require_chariow_config()
     key = body.license_key.strip()
     device = (body.device_identifier or "").strip() or None
-
-    # Allow pilot access tokens during university trials without requiring a Chariow call
-    pilot_student = match_pilot_token(key)
-    if pilot_student is not None:
-        return LicenseActivationResponse(
-            valid=True,
-            student_id=pilot_student,
-            access_token=key,
-            masked_key=mask_license_key(key),
-            status="active",
-            product_name="Accès pilote Studia L2 SIR",
-            quota=store.quota_status(pilot_student),
-        )
+    if "@" in key:
+        key = store.license_key_for_email(key)
+        if not key:
+            raise HTTPException(403, "Accès non reconnu. Utilisez le code reçu ou réessayez plus tard.")
 
     cached = store.get_cached_license(key)
     if cached and (int(cached["is_revoked"]) == 1 or cached["status"] == "revoked"):

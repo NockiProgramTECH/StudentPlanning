@@ -17,6 +17,8 @@ def test_chariow_license_activation_and_course_access(monkeypatch, tmp_path):
     monkeypatch.setenv("CHARIOW_PRODUCT_ID", "prd_studia_l2_sir")
     monkeypatch.delenv("STUDIA_ACCESS_TOKENS", raising=False)
 
+    monkeypatch.setenv("CHARIOW_PULSE_SECRET", "server_pulse_test")
+
     calls: list[tuple[str, str]] = []
 
     class FakeAsyncClient:
@@ -110,6 +112,7 @@ def test_chariow_license_activation_and_course_access(monkeypatch, tmp_path):
 
 def test_chariow_pulse_webhook_signature_idempotency_and_revocation(monkeypatch, tmp_path):
     monkeypatch.setenv("STUDIA_DB_PATH", str(tmp_path / "pulse.sqlite3"))
+    monkeypatch.setenv("CHARIOW_PRODUCT_ID", "prd_1")
     pulse_secret = "whsec_test_chariow_pulse_signing_secret"
     monkeypatch.setenv("CHARIOW_PULSE_SECRET", pulse_secret)
     monkeypatch.setenv("CHARIOW_API_KEY", "sk_live_server_secret_test")
@@ -201,4 +204,4 @@ def test_chariow_pulse_webhook_signature_idempotency_and_revocation(monkeypatch,
         headers={"Authorization": "Bearer CHRW-PULSE-KEY-9999"},
     )
     assert q_revoked.status_code == 403
-    assert "révoquée" in q_revoked.json()["detail"]
+    assert "inactif" in q_revoked.json()["detail"]
