@@ -4,6 +4,7 @@ __pycache__/
 .pytest_cache/
 .venv/
 .env
+backend/*.sqlite3
 # Flutter / Android
 .dart_tool/
 .flutter-plugins*
@@ -12,7 +13,7 @@ __pycache__/
 .pub/
 build/
 mobile/android/.gradle/
-mobile/android/local.properties
+**/local.properties
 mobile/ios/Flutter/Generated.xcconfig
 mobile/ios/Flutter/flutter_export_environment.sh
 *.iml

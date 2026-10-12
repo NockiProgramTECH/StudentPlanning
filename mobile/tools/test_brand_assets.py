@@ -50,7 +50,33 @@ class AndroidBrandAssetsTest(unittest.TestCase):
         native = (MAIN / "kotlin/com/studentplanning/studia/MainActivity.kt").read_text()
         self.assertIn('"courses_studia_v2"', native)
         self.assertIn('"revisions_studia_v2"', native)
+        self.assertIn("R.raw.studia_course", native)
+        self.assertIn("R.raw.studia_revision", native)
         self.assertIn("channel.setSound(sound, attributes)", native)
+        keep_xml = (RES / "raw/keep.xml").read_text()
+        self.assertIn("@raw/studia_course", keep_xml)
+        self.assertIn("@raw/studia_revision", keep_xml)
+
+    def test_mobile_uses_build_time_api_base_url_without_hardcoded_endpoints_or_keys(self):
+        mobile_root = Path(__file__).resolve().parents[1]
+        self.assertFalse((mobile_root / "planning_etudiant").exists())
+        planning_api = (mobile_root / "lib/services/planning_api.dart").read_text()
+        self.assertIn("String.fromEnvironment('API_BASE_URL')", planning_api)
+        for dart_file in (mobile_root / "lib").rglob("*.dart"):
+            content = dart_file.read_text()
+            for forbidden in (
+                "http://192.168",
+                "http://10.0.2.2",
+                "http://127.0.0.1",
+                "http://localhost",
+                "openrouter.ai",
+                "api.chariow.com",
+                "sk-or-",
+                "sk_live_",
+                "whsec_",
+            ):
+                self.assertNotIn(forbidden, content.lower(), f"Forbidden literal {forbidden} in {dart_file}")
+
 
 
 if __name__ == "__main__":

@@ -35,6 +35,7 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   final store = ScheduleStore();
   List<Schedule> saved = [];
+  Schedule? activeSchedule;
   int tab = 0;
   bool busy = true;
   String? loadError;
@@ -45,7 +46,20 @@ class _AppShellState extends State<AppShell> {
   Future<void> refresh() async {
     try {
       final all = await store.all();
-      if (mounted) setState(() { saved = all; busy = false; loadError = null; });
+      if (mounted) {
+        setState(() {
+          saved = all;
+          if (activeSchedule != null) {
+            activeSchedule = all.where((s) =>
+              s.className == activeSchedule!.className &&
+              s.weekStart.year == activeSchedule!.weekStart.year &&
+              s.weekStart.month == activeSchedule!.weekStart.month &&
+              s.weekStart.day == activeSchedule!.weekStart.day).firstOrNull;
+          }
+          busy = false;
+          loadError = null;
+        });
+      }
     } catch (_) {
       if (mounted) setState(() { busy = false; loadError = 'Lecture des plannings impossible. Réessayez.'; });
     }
@@ -53,8 +67,9 @@ class _AppShellState extends State<AppShell> {
 
   Future<void> save(Schedule schedule) async {
     await store.save(schedule);
+    activeSchedule = schedule;
     await refresh();
-    if (mounted) setState(() => tab = 2);
+    if (mounted) setState(() => tab = 1);
   }
 
   void openMockups() => Navigator.of(context).push(MaterialPageRoute(builder: (routeContext) => const MockupGallery()));
@@ -67,14 +82,16 @@ class _AppShellState extends State<AppShell> {
     if (busy) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     if (loadError != null) return Scaffold(body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
       Text(loadError!), TextButton(onPressed: refresh, child: const Text('Réessayer'))])));
-    final monday = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
-    final current = saved.where((s) => s.weekStart.year == monday.year && s.weekStart.month == monday.month && s.weekStart.day == monday.day).firstOrNull
-      ?? (saved.isEmpty ? demoSchedule(DateTime.now()) : saved.first);
+    final now = DateTime.now();
+    final monday = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
+    final current = activeSchedule
+      ?? saved.where((s) => s.weekStart.year == monday.year && s.weekStart.month == monday.month && s.weekStart.day == monday.day).firstOrNull
+      ?? (saved.isEmpty ? demoSchedule(now) : saved.first);
     final pages = [
       HomeScreen(schedule: current, onImport: openImport, onPlanning: () => setState(() => tab = 1), onMockups: openMockups),
-      PlanningScreen(schedule: current),
+      PlanningScreen(schedule: current, onRevisions: () => setState(() => tab = 2)),
       RevisionScreen(schedule: current, store: store),
-      HistoryScreen(schedules: saved),
+      HistoryScreen(schedules: saved, onSelect: (s) => setState(() { activeSchedule = s; tab = 1; })),
     ];
     return Scaffold(body: IndexedStack(index: tab, children: pages),
       bottomNavigationBar: NavigationBar(selectedIndex: tab, onDestinationSelected: (i) => setState(() => tab = i),

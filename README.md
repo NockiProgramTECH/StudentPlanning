@@ -56,6 +56,13 @@ L'URL `10.0.2.2` fonctionne pour **l'émulateur Android**. Sur téléphone physi
 - `POST /api/import` : multipart avec `file` (PDF), `class_name`, `week_start` (lundi ISO `YYYY-MM-DD`) et éventuellement `previous` (planning N-1 validé en JSON). Répond `{schedule, changes_from_previous_week}`. Un PDF scanné, un document ambigu ou une réponse IA invalide ne génèrent pas silencieusement de faux cours. Les pages sont filtrées par classe ; la date du PDF est comparée au lundi choisi lorsqu’elle est lisible.
 - `POST /api/compare` : `{previous: Schedule, current: Schedule}` pour des semaines consécutives de la même classe ; répond `{changes: [...]}`. Les changements sont des **propositions** à confirmer, et la comparaison reste prudente sur les cours répétés.
 - `Schedule` : `{class_name, week_start, courses: [{subject, day, start, end, room, teacher, source_page, kind, delivery_mode, needs_review}], warnings}` ; `day` va de 1 (lundi) à 7 (dimanche). Les horaires sont en `HH:mm`. `kind` vaut `course`, `assessment` ou `unknown` ; `delivery_mode` vaut `online`, `in_person` ou `unknown`.
+- **Module payant (Supports de cours & Quiz IA progressif, protégé par licence Chariow ou jeton pilote `STUDIA_ACCESS_TOKENS` et quotas de coût)** :
+  - `POST /api/licenses/activate` : vérifie et active une clé de licence Chariow côté serveur (`GET /v1/licenses/{key}` et `POST /v1/licenses/{key}/activate` avec `CHARIOW_API_KEY`) et renvoie un jeton d'accès Studia ainsi que l'état des quotas.
+  - `POST /api/webhooks/chariow` : reçoit les webhooks Chariow Pulse, vérifie la signature HMAC-SHA256 (`x-chariow-signature: sha256=<hex>`) sur le corps brut avec `CHARIOW_PULSE_SECRET`, déduplique via `x-pulse-delivery-id` et met à jour le cycle de vie de la licence (`license.issued`, `license.activated`, `license.expired`, `license.revoked`).
+  - `GET /api/courses/quota` : état des quotas journaliers et du plafond mensuel USD de l'étudiant authentifié.
+  - `POST /api/courses/import` : importe un support de cours PDF (distinct des emplois du temps, max 10 Mo et 30 pages), extrait le texte par **sections** avec numéros de pages (`[Page N]`), sans jamais transmettre le PDF brut à l'IA.
+  - `POST /api/courses/{doc_id}/sections/{section_index}/questions` : génère progressivement via OpenRouter les questions QCM d'une seule section à la fois, valide le JSON et vérifie que chaque `source_page` appartient bien à la section.
+  - `POST /api/courses/{doc_id}/answers` : note la réponse soumise, renvoie l'explication pédagogique et la référence de page (`source_page`), et sauvegarde la progression.
 
 ```bash
 cd backend

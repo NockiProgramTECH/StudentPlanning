@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../demo.dart';
 import '../theme.dart';
 import '../screens/comparison_screen.dart';
+import '../screens/course_study_screen.dart';
 import '../screens/history_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/import_screen.dart';
@@ -42,6 +43,8 @@ class MockupGallery extends StatelessWidget {
         HistoryScreen(schedules: [current, demoPrevious(now)], isDemo: true)),
       ('07', 'Révisions', Icons.menu_book_outlined,
         RevisionScreen(schedule: current, store: ScheduleStore(), previewMode: true)),
+      ('08', 'Supports de cours & Quiz IA', Icons.quiz_outlined,
+        CourseStudyScreen(store: ScheduleStore(), previewMode: true)),
     ];
     return Scaffold(appBar: AppBar(title: const Text('Studia · Maquettes'), backgroundColor: canvas),
       body: ListView(padding: const EdgeInsets.fromLTRB(22, 12, 22, 30), children: [

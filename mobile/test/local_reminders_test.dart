@@ -42,4 +42,22 @@ void main() {
     expect(await reminders.requestPermission(), isFalse);
     await reminders.cancel(42);
   });
+
+  test('test immédiat des deux sons Studia (révisions et cours)', () async {
+    const channel = MethodChannel('studia/reminders-both-sounds-test');
+    final recorded = <(String, Object?)>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (call) async {
+      recorded.add((call.method, call.arguments));
+      return null;
+    });
+    addTearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, null));
+    final reminders = LocalReminders(channel: channel, android: true);
+    await reminders.testNotification();
+    await reminders.testNotification(channel: 'courses');
+    expect(recorded.length, 2);
+    expect(recorded[0], ('testNotification', null));
+    expect(recorded[1], ('testNotification', {'channel': 'courses'}));
+  });
 }

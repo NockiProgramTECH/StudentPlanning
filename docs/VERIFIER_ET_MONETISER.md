@@ -37,12 +37,12 @@ cd mobile
 flutter clean
 flutter pub get
 flutter test
-flutter build apk --debug
+flutter build apk --debug --dart-define=API_BASE_URL=<MON_URL_PUBLIQUE_HTTPS>
 # À installer localement pour essai, par exemple :
 adb install -r build/app/outputs/flutter-apk/app-debug.apk
 ```
 
-Pour distribuer : configurer d'abord une **signature release** (keystore privé, jamais dans Git), l'identifiant d'application, les versions, la politique de confidentialité et les autorisations Android ; exécuter `flutter build apk --release` (distribution directe) ou `flutter build appbundle --release` (Play Store). Un APK debug n'est pas une version commerciale. Ne pas publier avant un essai sur un vrai téléphone.
+Pour distribuer : configurer d'abord une **signature release** (keystore privé, jamais dans Git), l'identifiant d'application, les versions, la politique de confidentialité et les autorisations Android ; exécuter `flutter build apk --release --dart-define=API_BASE_URL=<MON_URL_PUBLIQUE_HTTPS>` (distribution directe) ou `flutter build appbundle --release --dart-define=API_BASE_URL=<MON_URL_PUBLIQUE_HTTPS>` (Play Store). Un APK debug n'est pas une version commerciale. Ne pas publier avant un essai sur un vrai téléphone.
 
 ## 4. Hypothèse commerciale : gratuite hors ligne + modules payants
 
@@ -52,10 +52,22 @@ Conserver gratuitement l'import/validation du planning, les révisions locales e
 
 `Flutter → FastAPI (authentification, quotas, validation des entrées) → OpenRouter (modèle choisi côté serveur) → validation JSON du résultat → écran de vérification humaine → stockage local seulement après validation`. Garder `OPENROUTER_API_KEY` dans l'environnement du **backend uniquement**, jamais dans l'APK ou le dépôt. Mettre un plafond de coût par utilisateur, des délais d'attente, une limite de taille et de fréquence de PDF, et traiter 402/429/5xx sans perdre le planning local. Avant de transmettre un emploi du temps étudiant : consentement, minimisation du contenu et vérification de la politique de confidentialité du modèle/fournisseur choisi. Le calcul des révisions et les rappels locaux n'ont pas besoin d'IA.
 
-### Chariow : proposition de licence, non intégrée
+### Chariow : intégration Licence & Webhook Pulse côté serveur
 
-Créer un produit « licence » sur Chariow avec validité et nombre d'activations choisis. Après **paiement confirmé par webhook vérifié** ou interrogation serveur fiable (pas par simple page de succès), FastAPI associe la clé à un compte/installation, contrôle sa validité/activations via l'API Chariow puis délivre une autorisation courte pour les fonctionnalités payantes. Conserver la clé API Chariow et les secrets webhook côté FastAPI ; prévoir révocation, remboursement, perte de connexion et restauration du droit. Ne pas rendre le planning local inutilisable en cas de panne de licence. Vérifier les modalités de webhook/API en vigueur avant de coder l'intégration.
+L'intégration Chariow est implémentée dans `backend/app/chariow.py`, `backend/app/main.py` et `backend/app/course_quiz.py` conformément à la documentation officielle (`https://chariow.dev`) :
 
-Une vente directe d'APK peut utiliser un paiement externe sous réserve des obligations locales (factures, taxes, remboursements, données). **Sur Google Play**, les achats numériques dans l'application relèvent en général de Google Play Billing, avec exceptions/programmes et pays spécifiques : ne pas intégrer un lien Chariow in-app sans vérifier la politique qui s'applique à votre distribution. Chariow annonce publiquement une commission (actuellement 15 % selon sa page tarifaire) ; confirmer les conditions et frais applicables à votre compte avant de fixer un tarif. À décider avant développement : canal de distribution, offre (abonnement ou achat), durée de licence, prix, limites de consommation IA et mécanisme de compte.
+1. **Secrets strictement côté serveur FastAPI** (jamais dans Flutter ni dans Git) :
+   - `CHARIOW_API_KEY=sk_live_...` (Settings → API Keys)
+   - `CHARIOW_PULSE_SECRET=whsec_...` (Pulses → Signing secret)
+   - `CHARIOW_PRODUCT_ID=prd_...` (optionnel : restreint l'activation à votre produit Studia L2 SIR)
+2. **Activation et vérification de licence (`POST /api/licenses/activate`)** :
+   - Interroge `GET https://api.chariow.com/v1/licenses/{licenseKey}` puis, si le statut est `pending_activation` ou qu'un nouvel `device_identifier` est présenté, appelle `POST https://api.chariow.com/v1/licenses/{licenseKey}/activate`.
+   - Enregistre l'état de la licence dans SQLite (`chariow_licenses`) et délivre un jeton serveur (`studia_lic_...`) utilisable dans `Authorization: Bearer <token>` sur `/api/courses/*`.
+3. **Webhook Chariow Pulse (`POST /api/webhooks/chariow`)** :
+   - Vérifie la signature HMAC-SHA256 de l'en-tête `x-chariow-signature: sha256=<hex>` calculée sur les **octets bruts** du corps HTTP avec `CHARIOW_PULSE_SECRET` via `hmac.compare_digest`.
+   - Déduplique les livraisons via `x-pulse-delivery-id` (`chariow_pulse_deliveries`).
+   - Traite `license.issued`, `license.activated`, `license.expired` et `license.revoked` (révocation immédiate de l'accès aux endpoints `/api/courses/*`, sans jamais bloquer le planning local ni les révisions hors ligne).
 
-Références : [OpenRouter authentification](https://openrouter.ai/docs/api_reference/authentication), [limites OpenRouter](https://openrouter.ai/docs/api_reference/limits), [Chariow : créer un produit licence](https://help.chariow.com/fr/articles/121-creer-un-produit-sur-chariow), [API Chariow](https://chariow.dev/api-reference/introduction), [tarifs Chariow](https://chariow.com/fr/pricing), [politique Google Play](https://support.google.com/googleplay/android-developer/answer/10281818?hl=en).
+Une vente directe d'APK peut utiliser un paiement externe sous réserve des obligations locales (factures, taxes, remboursements, données). **Sur Google Play**, les achats numériques dans l'application relèvent en général de Google Play Billing, avec exceptions/programmes et pays spécifiques : ne pas intégrer un lien d'achat Chariow in-app sans vérifier la politique qui s'applique à votre distribution. Chariow annonce publiquement une commission (actuellement 15 % selon sa page tarifaire) ; confirmer les conditions et frais applicables à votre compte avant de fixer un tarif.
+
+Références : [OpenRouter authentification](https://openrouter.ai/docs/api_reference/authentication), [limites OpenRouter](https://openrouter.ai/docs/api_reference/limits), [Chariow : créer un produit licence](https://help.chariow.com/fr/articles/121-creer-un-produit-sur-chariow), [API Chariow](https://chariow.dev/api-reference/introduction), [Sécurité Pulse Chariow](https://chariow.dev/en/guides/pulse-security), [tarifs Chariow](https://chariow.com/fr/pricing), [politique Google Play](https://support.google.com/googleplay/android-developer/answer/10281818?hl=en).

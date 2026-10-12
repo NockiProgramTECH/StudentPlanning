@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
@@ -8,7 +9,7 @@ import '../models/schedule.dart';
 /// HTTPS public domain for deployed builds. Never bake a personal LAN IP in.
 const apiBaseUrl = String.fromEnvironment('API_BASE_URL');
 
-Uri importEndpoint(String baseUrl, {bool release = kReleaseMode}) {
+Uri apiUri(String baseUrl, String endpointPath, {bool release = kReleaseMode}) {
   final trimmed = baseUrl.trim().replaceFirst(RegExp(r'/+$'), '');
   final base = Uri.tryParse(trimmed);
   if (base == null || !base.hasAuthority ||
@@ -19,7 +20,21 @@ Uri importEndpoint(String baseUrl, {bool release = kReleaseMode}) {
   if (release && base.scheme != 'https') {
     throw StateError('En version distribuée, le serveur API doit utiliser HTTPS.');
   }
-  return Uri.parse('$trimmed/api/import');
+  final normalizedPath = endpointPath.startsWith('/') ? endpointPath : '/$endpointPath';
+  return Uri.parse('$trimmed$normalizedPath');
+}
+
+Uri importEndpoint(String baseUrl, {bool release = kReleaseMode}) =>
+    apiUri(baseUrl, '/api/import', release: release);
+
+String formatApiError(Object error) {
+  if (error is TimeoutException || error is http.ClientException) {
+    return 'Serveur API injoignable ou délai dépassé. Vérifiez votre connexion Internet et l’URL HTTPS configurée.';
+  }
+  return error
+      .toString()
+      .replaceFirst('Exception: ', '')
+      .replaceFirst('Bad state: ', '');
 }
 
 class ImportResponse {
@@ -30,11 +45,22 @@ class ImportResponse {
 
 class PlanningApi {
   final http.Client client;
-  PlanningApi([http.Client? client]) : client = client ?? http.Client();
+  final String baseUrl;
+  PlanningApi([http.Client? client, this.baseUrl = apiBaseUrl])
+      : client = client ?? http.Client();
+
+  Future<bool> checkHealth() async {
+    final response = await client
+        .get(apiUri(baseUrl, '/health'))
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode != 200) return false;
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return data['status'] == 'ok';
+  }
 
   Future<ImportResponse> importPdf({required Uint8List bytes, required String filename,
     required String className, required DateTime weekStart, Schedule? previous}) async {
-    final request = http.MultipartRequest('POST', importEndpoint(apiBaseUrl));
+    final request = http.MultipartRequest('POST', importEndpoint(baseUrl));
     request.fields['class_name'] = className;
     request.fields['week_start'] = Schedule(className: className, weekStart: weekStart, courses: const []).toJson()['week_start'] as String;
     if (previous != null) request.fields['previous'] = jsonEncode(previous.toJson());

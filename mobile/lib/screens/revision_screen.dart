@@ -7,20 +7,22 @@ import '../revisions/revision_session.dart';
 import '../services/local_reminders.dart';
 import '../services/schedule_store.dart';
 import '../theme.dart';
+import 'course_study_screen.dart';
 
 class RevisionScreen extends StatefulWidget {
   final Schedule schedule;
   final ScheduleStore store;
   final bool previewMode;
+  final LocalReminders? reminders;
   const RevisionScreen({super.key, required this.schedule, required this.store,
-    this.previewMode = false});
+    this.previewMode = false, this.reminders});
 
   @override
   State<RevisionScreen> createState() => _RevisionScreenState();
 }
 
 class _RevisionScreenState extends State<RevisionScreen> {
-  final reminders = LocalReminders();
+  late final reminders = widget.reminders ?? LocalReminders();
   List<RevisionSession> sessions = [];
   Map<String, int> lastWeek = {};
   bool loading = true;
@@ -198,6 +200,16 @@ class _RevisionScreenState extends State<RevisionScreen> {
             },
             icon: const Icon(Icons.notifications_outlined),
             label: const Text('Tester une notification immédiate')),
+            TextButton.icon(
+            onPressed: () async {
+              try {
+                await reminders.testNotification(channel: 'courses');
+              } catch (e) {
+                if (mounted) setState(() => error = 'Test du son Cours impossible : $e');
+              }
+            },
+            icon: const Icon(Icons.volume_up_outlined),
+            label: const Text('Tester le son Cours (matin)')),
           ]),
           if (error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(error!,
             style: const TextStyle(color: Colors.red))),
@@ -242,6 +254,55 @@ class _RevisionScreenState extends State<RevisionScreen> {
           const SizedBox(height: 16),
           const Text('Cours du matin : rappel 1 h avant. Révisions : rappel au début. Android peut différer une alerte si les alarmes exactes sont désactivées.',
             style: TextStyle(color: muted, fontSize: 12, height: 1.5)),
+          const SizedBox(height: 18),
+          Material(
+            color: mint,
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => CourseStudyScreen(
+                    store: widget.store,
+                    suggestedSubjects: {
+                      for (final c in schedule.courses)
+                        if (c.subject.trim().isNotEmpty) c.subject.trim(),
+                    }.toList(),
+                    previewMode: widget.previewMode,
+                  ),
+                ),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(18),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.quiz_outlined, color: teal),
+                    ),
+                    SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Supports de cours & Quiz IA',
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: ink),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Découper un support PDF par sections et répondre aux QCM progressifs avec références de pages',
+                            style: TextStyle(fontSize: 12, color: muted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_rounded, color: teal),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ])),
     );
