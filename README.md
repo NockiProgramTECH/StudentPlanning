@@ -27,7 +27,7 @@ export OPENROUTER_API_KEY='votre-cle-serveur' # requis uniquement pour l'interpr
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Documentation interactive : `http://localhost:8000/docs` · santé : `GET /health`. Pour une image Docker, des contrôles HTTP et les étapes de mise en ligne sur un hébergeur, voir [Déployer l'API FastAPI](docs/DEPLOY_API.md). Aucun service public permanent n'est encore configuré.
+Vitrine : `http://localhost:8000/` · documentation interactive : `http://localhost:8000/docs` · santé : `GET /health`. Pour les étapes de mise en ligne FastAPI Cloud, la configuration Neon et les options Docker, voir [Déployer l'API FastAPI](docs/DEPLOY_API.md).
 
 Pour essayer **le PDF réel L2 SIR** (depuis `backend/`, API lancée, sans clé IA pour ce modèle reconnu) :
 

@@ -1,6 +1,12 @@
 # Déployer l'API FastAPI — pilote pour L2 SIR
 
-L'API fonctionne déjà avec **FastAPI + Uvicorn**. Les routes `GET /health`, `GET /docs`, `POST /api/import` et `POST /api/compare` existent. Le PDF de test de l'université dans `backend/tests/Emploi_temps_12 -17-oct 2026.pdf` est lu par l'analyseur déterministe, **sans clé OpenRouter** ; le rendu du PDF et la correction des cours restent à valider dans Flutter. Aucune URL publique n'a été créée dans ce dépôt : il faut choisir un hébergeur, un domaine et éventuellement payer l'hébergement.
+L'application combine **FastAPI + Uvicorn** et la vitrine statique : `GET /` sert le site, `GET /health` vérifie l'API, `GET /docs` affiche sa documentation, et `POST /api/import` / `POST /api/compare` restent les routes de planning. La vitrine (`vitrine/`) doit être incluse dans les fichiers du déploiement. Le PDF de test de l'université dans `backend/tests/Emploi_temps_12 -17-oct 2026.pdf` est lu par l'analyseur déterministe, **sans clé OpenRouter** ; le rendu du PDF et la correction des cours restent à valider dans Flutter.
+
+## Hébergement FastAPI Cloud et base Neon
+
+Dans le déploiement FastAPI Cloud lié à ce dépôt, inclure le dossier `vitrine/` avec le code et installer les dépendances de `backend/requirements.txt`. Au redéploiement, la page `https://studia.fastapicloud.dev/` est servie par la route `/` de FastAPI ; les routes `/docs`, `/health` et `/api/...` restent disponibles sur le même domaine.
+
+Pour Neon, ajouter **`DATABASE_URL` comme secret d'environnement du service FastAPI Cloud**, avec l'URL PostgreSQL de Neon (connexion avec SSL, URL pooled recommandée). Ne pas inscrire cette URL dans les fichiers, le code, les builds mobiles ou Git. Au démarrage, l'application crée les tables vides pour les supports, sections, questions, réponses, quotas IA, licences Chariow, e-mails de licences et livraisons Pulse. Les nouvelles données sont ensuite persistées dans Neon ; aucune base SQLite locale n'est importée. En développement sans `DATABASE_URL`, le service conserve SQLite via `STUDIA_DB_PATH`.
 
 ## Vérification reproductible en local
 
@@ -27,14 +33,16 @@ Résultat attendu : santé `{"status":"ok"}`, import HTTP 200, **7 cours L2 SIR*
 
 ## Déploiement sur un hébergeur acceptant Docker
 
-Choisir le dossier **`backend/` comme contexte de build** et son `Dockerfile` comme Dockerfile ; il n'inclut ni les PDF de tests, ni les secrets. Exemple depuis la racine du dépôt :
+Choisir la **racine du dépôt comme contexte de build** et `backend/Dockerfile` comme Dockerfile. L'image inclut aussi les fichiers statiques de la vitrine ; `.dockerignore` exclut les clés locales, `.env`, les builds et les caches. Exemple depuis la racine du dépôt :
 
 ```bash
-docker build -t studia-api ./backend
+docker build -f backend/Dockerfile -t studia-api .
 docker run --rm -p 8000:8000 -e PORT=8000 studia-api
 ```
 
-Configurer chez l'hébergeur : port exposé (la variable `PORT` est prise en compte, défaut 8000), health check `/health`, **HTTPS** côté hébergeur/proxy, taille maximale de requête raisonnable au proxy, et variables d'environnement uniquement côté serveur. Aucun disque persistant n'est requis pour cette **API d'emploi du temps** : elle reçoit le PDF, extrait les cours et répond, sans enregistrer de compte ni de PDF. Les plannings validés et rappels sont conservés sur le téléphone.
+Dans l'hébergeur, définir le contexte sur la racine du dépôt et le Dockerfile sur `backend/Dockerfile`, puis redéployer cette image sur le service associé à `studia.fastapicloud.dev`. Configurer le port exposé (la variable `PORT` est prise en compte, défaut 8000), le health check `/health` et **HTTPS** côté hébergeur/proxy. Après le déploiement, `https://studia.fastapicloud.dev/` affiche la vitrine ; `/docs`, `/health` et les routes `/api/...` restent accessibles. Un changement Git seul ne met pas à jour le site déjà hébergé : il faut déclencher le déploiement du service.
+
+Aucun disque persistant n'est requis pour cette **API d'emploi du temps** : elle reçoit le PDF, extrait les cours et répond, sans enregistrer de compte ni de PDF. Les plannings validés et rappels sont conservés sur le téléphone.
 
 D'abord déployer **sans `OPENROUTER_API_KEY`** : le PDF L2 SIR reconnu sera importable, les documents non reconnus répondront 503 sans coût IA. Après ajout d'une authentification réelle et de quotas, configurer `OPENROUTER_API_KEY` comme **secret serveur**, `OPENROUTER_MODEL` si nécessaire. Ne jamais la mettre dans Flutter, dans l'image Docker, dans Git, ni dans une URL. L'IA reçoit des extraits textuels filtrés, pas le PDF brut, mais ces extraits peuvent contenir des données personnelles.
 

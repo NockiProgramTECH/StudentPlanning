@@ -1,7 +1,11 @@
 from datetime import date
+from contextlib import asynccontextmanager
 import json
+import os
+from pathlib import Path
 from fastapi import Body, Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 from .auth_quota import QuotaExceededError, require_student_id
 from .access import free_access_enabled, portal_url, require_chariow_config
@@ -33,17 +37,34 @@ from .schemas import (
 from .layout import normalize_class
 from .template import document_week, parse_template
 
-app = FastAPI(title="StudentPlanning API", version="0.2.0")
-MAX_PDF_BYTES = 10 * 1024 * 1024
+_course_stores: dict[tuple[str, str], CourseStore] = {}
 
 
 def get_course_store() -> CourseStore:
-    return CourseStore()
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        store_key = ("postgres", database_url)
+    else:
+        sqlite_path = os.getenv("STUDIA_DB_PATH") or str(
+            Path(__file__).resolve().parents[1] / "studia_courses.sqlite3"
+        )
+        store_key = ("sqlite", sqlite_path)
+    if store_key not in _course_stores:
+        _course_stores[store_key] = CourseStore()
+    return _course_stores[store_key]
 
 
-@app.get("/", include_in_schema=False)
-def root():
-    return RedirectResponse("/docs")
+@asynccontextmanager
+async def lifespan(_app):
+    get_course_store()
+    yield
+
+
+app = FastAPI(title="StudentPlanning API", version="0.2.0", lifespan=lifespan)
+MAX_PDF_BYTES = 10 * 1024 * 1024
+VITRINE_DIR = Path(
+    os.environ.get("STUDIA_VITRINE_DIR", Path(__file__).resolve().parents[2] / "vitrine")
+)
 
 
 @app.get("/health")
@@ -349,3 +370,4 @@ async def chariow_pulse_webhook(
     )
 
 
+app.mount("/", StaticFiles(directory=VITRINE_DIR, html=True), name="vitrine")
