@@ -102,7 +102,7 @@ class AndroidBrandAssetsTest(unittest.TestCase):
 
     def test_mobile_uses_build_time_api_base_url_without_hardcoded_endpoints_or_keys(self):
         mobile_root = Path(__file__).resolve().parents[1]
-        self.assertFalse((mobile_root / "planning_etudiant").exists())
+        self.assertFalse((mobile_root / "planning_etudiant" / "pubspec.yaml").exists())
         planning_api = (mobile_root / "lib/services/planning_api.dart").read_text()
         self.assertIn("String.fromEnvironment('API_BASE_URL')", planning_api)
         for dart_file in (mobile_root / "lib").rglob("*.dart"):

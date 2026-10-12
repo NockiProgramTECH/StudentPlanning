@@ -7,10 +7,10 @@ La racine du dépôt contient **`codemagic.yaml`**. Deux workflows manuels :
 | `android-debug` | Premier essai technique sur ton téléphone | `studia-test-debug.apk` |
 | `android-beta` | Bêta release avec ta signature privée stable | `studia-beta.apk` |
 
-Le build Android n'a pas été exécuté dans l'environnement de préparation du dépôt,
-qui n'a pas Flutter/Android SDK. Un build Codemagic réussi puis un essai sur téléphone
-restent nécessaires avant de déclarer l'application prête. Ces workflows n'effectuent
-aucun déploiement du backend et aucune publication automatique de l'APK.
+Les builds Android locaux debug, release APK et AAB ont été vérifiés avec Flutter.
+Le workflow Codemagic n'a pas encore été exécuté ; un essai sur téléphone réel reste
+nécessaire avant de déclarer l'application prête. Ces workflows n'effectuent aucun
+déploiement du backend et aucune publication automatique de l'APK.
 
 ## 1. Ajouter le dépôt et la configuration publique
 
@@ -90,7 +90,9 @@ CM_KEY_PASSWORD
 Ne pas recopier ces valeurs dans le code. `mobile/android/app/build.gradle` les lit depuis
 l'environnement. Le workflow bêta refuse de démarrer sans les quatre valeurs et vérifie
 la signature avec `apksigner` après compilation. Aucun repli sur une clé debug pour le
-build release. Un build release local sans ces variables reste sans signature privée.
+build release. En local, `mobile/android/app/build.gradle` peut aussi signer avec un
+keystore privé décrit dans `mobile/android/key.properties` (ignoré par Git) ; sans
+configuration locale ou CI, le build release n'a pas de signature privée.
 
 Lancer **Android - beta signee (release)** (`android-beta`). Récupérer :
 

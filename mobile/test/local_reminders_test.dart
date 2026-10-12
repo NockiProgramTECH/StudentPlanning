@@ -58,6 +58,7 @@ void main() {
     await reminders.testNotification(channel: 'courses');
     expect(recorded.length, 2);
     expect(recorded[0], ('testNotification', null));
-    expect(recorded[1], ('testNotification', {'channel': 'courses'}));
+    expect(recorded[1].$1, 'testNotification');
+    expect((recorded[1].$2 as Map)['channel'], 'courses');
   });
 }

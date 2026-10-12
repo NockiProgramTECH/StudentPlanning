@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:student_planning/models/schedule.dart';
 import 'package:student_planning/demo.dart';
 import 'package:student_planning/revisions/revision_session.dart';
 import 'package:student_planning/screens/revision_screen.dart';
+import 'package:student_planning/services/local_reminders.dart';
 import 'package:student_planning/services/schedule_store.dart';
 
 class MemoryStore extends ScheduleStore {
@@ -48,9 +50,16 @@ void main() {
     final session = RevisionSession(id: 42, className: 'L2 SIR', weekStart: monday,
       subject: 'Réseaux', start: monday.add(const Duration(days: 6, hours: 20)),
       end: monday.add(const Duration(days: 6, hours: 20, minutes: 50)));
+    const channel = MethodChannel('studia/revision-screen-no-reminder-test');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (_) async => throw MissingPluginException());
+    addTearDown(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, null));
     await tester.pumpWidget(MaterialApp(home: RevisionScreen(
-      schedule: schedule, store: MemoryStore([session]))));
-    await tester.pumpAndSettle();
+      schedule: schedule, store: MemoryStore([session]),
+      reminders: LocalReminders(channel: channel, android: true))));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Réseaux'), findsOneWidget);
     expect(find.textContaining('Planning de révision indisponible'), findsNothing);
   });

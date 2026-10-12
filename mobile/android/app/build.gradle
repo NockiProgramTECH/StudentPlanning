@@ -14,6 +14,16 @@ if (ciKeystorePath) {
         }
     }
 }
+def localSigningFile = rootProject.file("key.properties")
+def localSigning = new Properties()
+if (localSigningFile.isFile()) {
+    localSigningFile.withInputStream { localSigning.load(it) }
+}
+def localKeystorePath = localSigning.getProperty("storeFile")
+if (!ciKeystorePath && localKeystorePath &&
+        ["storePassword", "keyAlias", "keyPassword"].any { !localSigning.getProperty(it) }) {
+    throw new GradleException("Local release signing requires storePassword, keyPassword, keyAlias, and storeFile in android/key.properties.")
+}
 
 android {
     namespace "com.studentplanning.studia"
@@ -40,6 +50,13 @@ android {
                 keyAlias System.getenv("CM_KEY_ALIAS")
                 keyPassword System.getenv("CM_KEY_PASSWORD")
             }
+        } else if (localKeystorePath) {
+            release {
+                storeFile rootProject.file(localKeystorePath)
+                storePassword localSigning.getProperty("storePassword")
+                keyAlias localSigning.getProperty("keyAlias")
+                keyPassword localSigning.getProperty("keyPassword")
+            }
         }
     }
     buildTypes {
@@ -47,10 +64,11 @@ android {
             // Never fall back to a debug key for release artifacts.
             if (ciKeystorePath) {
                 signingConfig signingConfigs.release
+            } else if (localKeystorePath) {
+                signingConfig signingConfigs.release
             }
         }
     }
-    // Without a private signing identity, local release builds remain unsigned.
-    // The Codemagic beta workflow explicitly refuses to proceed in that case.
+    // The Codemagic beta workflow explicitly requires its private signing identity.
 }
 flutter { source "../.." }

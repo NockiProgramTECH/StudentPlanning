@@ -68,6 +68,8 @@ flutter build apk --debug --dart-define=API_BASE_URL=<MON_URL_PUBLIQUE_HTTPS>
 flutter build apk --release --dart-define=API_BASE_URL=<MON_URL_PUBLIQUE_HTTPS>
 ```
 
+Pour signer une release en local, configure `mobile/android/key.properties` (ignoré par Git) avec `storePassword`, `keyPassword`, `keyAlias` et `storeFile=app/<nom-du-keystore>.jks`, puis conserve le keystore et ses mots de passe dans une sauvegarde privée. La compilation utilise cette clé locale ; sur Codemagic, elle utilise l'identité privée configurée dans l'environnement CI.
+
 Pour le développement seulement : `--dart-define=API_BASE_URL=http://10.0.2.2:8000` (émulateur), ou l'IP LAN de l'ordinateur (téléphone sur le même réseau). **Une version release refuse HTTP** pour l'import. Sans URL configurée, l'interface signale explicitement que le serveur manque au lieu d'essayer une adresse privée qui ne marcherait que chez le développeur. Les options `--dart-define` sont embarquées dans l'APK : n'y placer aucun secret.
 
 ## Ce qui bloque une ouverture au public sans précaution
