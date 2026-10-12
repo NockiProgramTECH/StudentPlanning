@@ -3621,3 +3621,223 @@ body.modal-open {
 .demo-bottom > a {
   color: #536344;
 }
+/* A genuine APK is required before the download action becomes available. */
+[hidden] {
+  display: none !important;
+}
+.beta-section {
+  padding-top: 12px;
+  padding-bottom: 96px;
+}
+.beta-card {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 64px;
+  padding: 48px;
+  border: 1px solid var(--line);
+  border-radius: 19px;
+  background: #edf2e4;
+}
+.beta-intro > .eyebrow {
+  color: #536344;
+  font-size: 9px;
+  margin-bottom: 20px;
+}
+.beta-intro > p {
+  color: #606d56;
+  font-size: 12px;
+  line-height: 1.9;
+  margin-top: 18px;
+  max-width: 410px;
+}
+.beta-journey {
+  list-style: none;
+  padding: 0;
+  margin: 26px 0 0;
+  display: grid;
+  gap: 18px;
+}
+.beta-journey li {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.beta-journey li > span {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 25px;
+  color: #63794b;
+}
+.beta-journey b {
+  display: block;
+  font-size: 12px;
+}
+.beta-journey small {
+  display: block;
+  font-size: 11px;
+  color: #606d56;
+  margin-top: 5px;
+  line-height: 1.6;
+}
+.beta-download-card {
+  align-self: center;
+  background: #fafbf6;
+  border: 1px solid #d5dfc7;
+  border-radius: 15px;
+  padding: 29px;
+  box-shadow: 0 12px 30px #203d3207;
+}
+.beta-platform {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #536344;
+}
+.beta-platform svg {
+  width: 18px;
+  height: 18px;
+}
+.beta-download-card h3 {
+  font-size: 23px;
+  line-height: 1.4;
+  letter-spacing: -0.5px;
+  margin-top: 19px;
+}
+#beta-status {
+  font-size: 12px;
+  color: #606d56;
+  line-height: 1.8;
+  margin: 15px 0 22px;
+}
+.beta-download-card .button {
+  width: 100%;
+  font-size: 11px;
+  min-height: 47px;
+  margin-bottom: 10px;
+}
+#beta-check:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+.beta-file-details {
+  color: #536344;
+  font-size: 10px;
+  line-height: 1.7;
+  margin: 6px 0 14px;
+  overflow-wrap: anywhere;
+}
+.beta-release-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  margin-top: 5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.beta-release-link svg {
+  width: 13px;
+  height: 13px;
+}
+.beta-install-note {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #606d56;
+}
+.beta-install-note svg {
+  width: 17px;
+  height: 17px;
+}
+.beta-install-note p {
+  font-size: 10px;
+  line-height: 1.8;
+}
+.beta-feedback {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 28px;
+  padding: 30px 8px 0;
+}
+.beta-feedback .eyebrow {
+  font-size: 8px;
+  color: #606d56;
+}
+.beta-feedback h3 {
+  font-size: 21px;
+  letter-spacing: -0.5px;
+  margin-top: 9px;
+}
+.beta-feedback p {
+  font-size: 11px;
+  line-height: 1.9;
+  margin-top: 10px;
+  color: #606d56;
+  max-width: 660px;
+}
+.feedback-button {
+  border: 1px solid #a9ba94;
+  white-space: nowrap;
+  font-size: 11px;
+  background: #eef2e6;
+}
+.faq-list p a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (max-width: 950px) {
+  .beta-card {
+    padding: 30px;
+    gap: 26px;
+  }
+  .beta-card h2 {
+    font-size: 35px;
+  }
+  .beta-download-card {
+    padding: 22px;
+  }
+}
+@media (max-width: 700px) {
+  .beta-section {
+    padding-bottom: 60px;
+  }
+  .beta-card {
+    grid-template-columns: 1fr;
+    padding: 25px;
+    gap: 27px;
+  }
+  .beta-intro > .eyebrow {
+    font-size: 7px;
+    letter-spacing: 0.8px;
+  }
+  .beta-feedback {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 19px;
+    padding-top: 25px;
+  }
+  .beta-feedback p {
+    font-size: 12px;
+  }
+  .beta-download-card {
+    padding: 22px 18px;
+  }
+  .beta-download-card h3 {
+    font-size: 21px;
+  }
+  .beta-download-card .button {
+    font-size: 10px;
+    gap: 8px;
+    padding-inline: 12px;
+  }
+  .beta-platform {
+    font-size: 8px;
+    letter-spacing: 0.5px;
+  }
+}

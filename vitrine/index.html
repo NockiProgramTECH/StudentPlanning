@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f6f7f2" />
     <meta
       name="description"
-      content="Studia, le compagnon Android des étudiants L2 SIR. Transformez votre emploi du temps PDF en planning clair, organisez vos révisions et explorez vos cours avec des quiz par section."
+      content="Studia, le compagnon Android des étudiants, quelle que soit leur filière. Transformez votre emploi du temps PDF en planning clair, organisez vos révisions et explorez vos cours avec des quiz par section."
     />
     <meta
       property="og:title"
@@ -28,6 +28,7 @@
     />
     <link rel="stylesheet" href="styles.css" />
     <script src="app.js" defer></script>
+    <script src="beta.js" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#contenu">Aller au contenu</a>
@@ -109,8 +110,8 @@
           ><a href="#methode">Comment ça marche</a
           ><a href="#questions">Questions fréquentes</a>
         </nav>
-        <a class="button button-small button-dark nav-cta" href="#decouvrir"
-          >Découvrir Studia <svg><use href="#i-up-right" /></svg
+        <a class="button button-small button-dark nav-cta" href="#beta"
+          >Tester la bêta <svg><use href="#i-up-right" /></svg
         ></a>
         <button
           class="menu-toggle icon-button"
@@ -127,7 +128,7 @@
       <section class="hero container" aria-labelledby="hero-title">
         <div class="hero-copy">
           <div class="eyebrow hero-eyebrow">
-            <span class="status-dot"></span> LE COMPAGNON DES ÉTUDIANTS L2 SIR
+            <span class="status-dot"></span> LE COMPAGNON DE TA VIE ÉTUDIANTE
           </div>
           <h1 id="hero-title">
             Tes études,<br />l’esprit
@@ -149,8 +150,8 @@
             Et enfin, de la place pour tout le reste.
           </p>
           <div class="hero-actions">
-            <a href="#experience" class="button button-dark"
-              >Trouver mon rythme <svg><use href="#i-arrow" /></svg></a
+            <a href="#beta" class="button button-dark"
+              >Tester la bêta Android <svg><use href="#i-arrow" /></svg></a
             ><button class="text-button" data-open-demo>
               <span class="play-circle"
                 ><svg><use href="#i-play" /></svg></span
@@ -205,7 +206,7 @@
                   ><svg><use href="#i-book" /></svg></span
                 ><span class="sidebar-item"
                   ><svg><use href="#i-spark" /></svg></span
-                ><span class="sidebar-bottom">L2</span>
+                ><span class="sidebar-bottom">ST</span>
               </aside>
               <div class="planner-content">
                 <div class="planner-heading">
@@ -216,7 +217,7 @@
                   <span class="small-avatar">S</span>
                 </div>
                 <div class="week-title">
-                  <b>12 – 18 octobre</b><span>EXEMPLE L2 SIR</span>
+                  <b>12 – 18 octobre</b><span>SEMAINE DÉMO</span>
                 </div>
                 <div class="mini-week">
                   <div class="time-labels">
@@ -279,7 +280,7 @@
             <div class="phone-course" id="hero-course">
               <span class="course-time">08:00 — 10:00</span>
               <h4>Réseaux informatiques</h4>
-              <span class="course-room">Salle A04 · L2 SIR</span>
+              <span class="course-room">Salle A04 · Exemple</span>
               <div class="course-bottom">
                 <span class="mini-avatars"><i>A</i><i>M</i><i>S</i></span
                 ><span>On se retrouve en cours.</span>
@@ -373,7 +374,7 @@
             <div class="planning-illustration" aria-hidden="true">
               <div class="paper">
                 <span class="paper-label">EMPLOI DU TEMPS</span
-                ><span class="paper-sub">L2 SIR · Semaine 42</span>
+                ><span class="paper-sub">Exemple · Semaine 42</span>
                 <div class="paper-grid"></div>
                 <span class="pdf-badge">PDF</span>
               </div>
@@ -569,9 +570,126 @@
             ><span>Planning et révisions sur ton téléphone.</span>
           </div>
           <div>
-            <svg><use href="#i-book" /></svg><b>Fait pour L2 SIR</b
-            ><span>Un périmètre précis. Un projet concret.</span>
+            <svg><use href="#i-book" /></svg><b>Pour la vie étudiante</b
+            ><span>Ta filière. Tes cours. Ton rythme.</span>
           </div>
+        </div>
+      </section>
+
+      <section
+        class="beta-section container"
+        id="beta"
+        aria-labelledby="beta-title"
+      >
+        <div class="beta-card reveal">
+          <div class="beta-intro">
+            <span class="eyebrow"
+              ><span class="status-dot"></span> UNE BÊTA. TES IDÉES. LA SUITE
+              ENSEMBLE.</span
+            >
+            <h2 id="beta-title">
+              Teste aujourd’hui.<br /><span class="serif"
+                >Façonne la suite.</span
+              >
+            </h2>
+            <p>
+              Ton quotidien est le meilleur terrain de test. Étudiant en
+              sciences, en lettres, en gestion ou dans une autre filière : ton
+              expérience compte.
+            </p>
+            <ol class="beta-journey">
+              <li>
+                <span>01</span>
+                <div>
+                  <b>Installe la bêta Android</b
+                  ><small>Dès la publication de l’APK officiel.</small>
+                </div>
+              </li>
+              <li>
+                <span>02</span>
+                <div>
+                  <b>Prends une semaine pour explorer</b
+                  ><small
+                    >Lors des sessions gratuites, avec des quotas pour les quiz
+                    IA.</small
+                  >
+                </div>
+              </li>
+              <li>
+                <span>03</span>
+                <div>
+                  <b>Dis-nous ce qui t’aide vraiment</b
+                  ><small
+                    >Un déclic, une gêne, une idée : on veut ton avis.</small
+                  >
+                </div>
+              </li>
+            </ol>
+          </div>
+          <div class="beta-download-card">
+            <span class="beta-platform"
+              ><svg><use href="#i-file" /></svg> ANDROID · FICHIER APK</span
+            >
+            <h3>Ton prochain compagnon de cours.</h3>
+            <p id="beta-status" role="status" aria-live="polite">
+              Vérifie les versions officielles pour savoir si un APK bêta est
+              disponible.
+            </p>
+            <button class="button button-dark" id="beta-check" type="button">
+              Vérifier la disponibilité <svg><use href="#i-arrow" /></svg>
+            </button>
+            <a
+              class="button button-dark"
+              id="beta-download"
+              hidden
+              rel="noopener noreferrer"
+              aria-describedby="beta-file-details"
+              >Télécharger la bêta Android <svg><use href="#i-up-right" /></svg
+            ></a>
+            <p id="beta-file-details" class="beta-file-details" hidden></p>
+            <a
+              class="beta-release-link"
+              href="https://github.com/NockiProgramTECH/StudentPlanning/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Voir les versions officielles
+              <svg><use href="#i-up-right" /></svg
+            ></a>
+            <noscript
+              ><p>
+                JavaScript est nécessaire pour vérifier le téléchargement ici.
+                Le lien vers les versions officielles reste accessible.
+              </p></noscript
+            >
+            <div class="beta-install-note">
+              <svg><use href="#i-shield" /></svg>
+              <p>
+                Une version de test peut contenir des bugs. Installe uniquement
+                l’APK officiel et vérifie son origine avant d’autoriser
+                l’installation sur Android.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="beta-feedback reveal">
+          <div>
+            <span class="eyebrow">APRÈS QUELQUES JOURS D’UTILISATION</span>
+            <h3>Qu’est-ce qu’on peut améliorer ?</h3>
+            <p>
+              Partage ce qui fonctionne, ce qui bloque et ce qui te manque.<br />Les
+              retours sur GitHub sont publics et nécessitent un compte : n’y
+              joins aucun code d’accès, e-mail personnel ni document étudiant
+              non anonymisé.
+            </p>
+          </div>
+          <a
+            class="button feedback-button"
+            id="beta-feedback-link"
+            href="https://github.com/NockiProgramTECH/StudentPlanning/issues/new?title=Retour%20b%C3%AAta%20Studia"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Partager mon avis <svg><use href="#i-up-right" /></svg
+          ></a>
         </div>
       </section>
 
@@ -582,7 +700,9 @@
       >
         <div class="faq-intro reveal">
           <span class="eyebrow">03 / ON T’EXPLIQUE</span>
-          <h2>Les bonnes<br /><span class="serif">questions.</span></h2>
+          <h2 id="faq-title">
+            Les bonnes<br /><span class="serif">questions.</span>
+          </h2>
           <p>Un peu de clarté avant<br />de se lancer.</p>
           <span class="faq-doodle" aria-hidden="true">?</span>
         </div>
@@ -594,9 +714,12 @@
               ></span>
             </summary>
             <p>
-              Le projet est conçu pour les étudiants de L2 SIR. Ce périmètre
-              permet de travailler sur des emplois du temps concrets et un
-              parcours adapté, plutôt que de promettre une solution universelle.
+              Studia s’adresse aux étudiants, quelle que soit leur classe ou
+              leur filière. Les premiers tests ont commencé avec une classe
+              pilote : c’est un point de départ, pas une restriction du public
+              visé. La compatibilité avec les différents formats de planning
+              reste à valider pendant la bêta. Vérifie toujours les cours
+              extraits.
             </p>
           </details>
           <details>
@@ -606,10 +729,12 @@
               ></span>
             </summary>
             <p>
-              Studia est un projet en développement pour Android. Il n’y a pas
-              encore de téléchargement public ni de publication sur un store. Tu
-              peux explorer la démo de cette page et suivre le code et la
-              documentation du projet.
+              Les versions bêta Android sont proposées au fil des essais. Dans
+              l’<a href="#beta">espace bêta</a>, tu peux vérifier les versions
+              publiées et télécharger l’APK dès qu’il est disponible. La
+              vérification n’active un lien de téléchargement que si un fichier
+              APK existe dans une release officielle. En attendant, la démo
+              interactive reste accessible.
             </p>
           </details>
           <details>
@@ -649,6 +774,10 @@
               activé depuis l’espace étudiant. Des quotas journaliers et
               mensuels encadrent la génération dans les deux cas. Les questions
               se génèrent section par section, à partir du texte de ton support.
+              Des sessions de bêta gratuite sont prévues pour recueillir les
+              impressions. Leurs dates seront annoncées avec les versions. Un
+              accès payant à ce module est envisagé ensuite ; ses conditions
+              seront communiquées avant tout changement.
             </p>
           </details>
           <details>
@@ -722,8 +851,8 @@
       <div class="footer-bottom">
         <span>© <span id="year">2026</span> Studia · Pensé pour avancer.</span
         ><span class="footer-status"
-          ><span class="status-dot"></span> Projet Android en développement · L2
-          SIR</span
+          ><span class="status-dot"></span> Android · Conçu pour les
+          étudiants</span
         ><button class="footer-link" data-open-privacy>
           À propos de tes données
         </button>

@@ -125,4 +125,7 @@ npm start                    # aperçu sur le port 4173
 
 Pour le fonctionnement, les tests et le déploiement statique, voir le
 [README de la vitrine](vitrine/README.md). Le site présente honnêtement Studia comme
-un projet Android en développement, sans lien de téléchargement public inventé.
+un projet Android destiné aux étudiants de toutes les filières. Son espace bêta détecte
+les APK réellement publiés et propose un canal de retours. Voir le
+[guide bêta et retours](docs/BETA_ET_RETOURS.md). Les premiers tests L2 SIR restent un
+périmètre de validation technique, pas une restriction du public visé.

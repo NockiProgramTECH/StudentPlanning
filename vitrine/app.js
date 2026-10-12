@@ -151,12 +151,12 @@
       $("#hero-course h4").textContent = course.name;
       $("#hero-course .course-time").textContent =
         `${course.time} — ${course.end}`;
-      $("#hero-course .course-room").textContent = `${course.room} · L2 SIR`;
+      $("#hero-course .course-room").textContent = `${course.room} · Exemple`;
     }),
   );
 
   const stepViews = [
-    `<div class="preview-top"><b>STUDIA / IMPORT</b><span>01 — 03</span></div><h3 class="preview-heading">Le point de départ ?<br>Ton PDF.</h3><p class="preview-description">Sélectionne ton emploi du temps.<br>On t’aide à y voir plus clair.</p><div class="upload-zone">${icon("file")}<b>emploi_du_temps.pdf</b><span>PDF textuel · L2 SIR · Exemple fictif</span></div><div class="preview-meta">${icon("shield")}Tu vérifies toujours avant d’enregistrer.</div><div class="preview-action"><span>Passer à la vérification</span>${icon("arrow")}</div>`,
+    `<div class="preview-top"><b>STUDIA / IMPORT</b><span>01 — 03</span></div><h3 class="preview-heading">Le point de départ ?<br>Ton PDF.</h3><p class="preview-description">Sélectionne ton emploi du temps.<br>On t’aide à y voir plus clair.</p><div class="upload-zone">${icon("file")}<b>emploi_du_temps.pdf</b><span>PDF textuel · Exemple · Exemple fictif</span></div><div class="preview-meta">${icon("shield")}Tu vérifies toujours avant d’enregistrer.</div><div class="preview-action"><span>Passer à la vérification</span>${icon("arrow")}</div>`,
     `<div class="preview-top"><b>STUDIA / VÉRIFICATION</b><span>02 — 03</span></div><h3 class="preview-heading">Le dernier mot,<br>c’est toujours toi.</h3><p class="preview-description">Matière, salle, horaire : les cours extraits<br>restent à vérifier avant validation.</p><div class="preview-courses"><div class="preview-course"><div><b>Algorithmique</b><small>Lundi · 08:00 – 10:00 · Salle B12</small></div>${icon("check")}</div><div class="preview-course"><div><b>Réseaux informatiques</b><small>Mardi · 08:00 – 10:00 · Salle A04</small></div>${icon("check")}</div></div><div class="preview-action"><span>Valider mon planning</span>${icon("arrow")}</div>`,
     `<div class="preview-top"><b>STUDIA / C’EST PARTI</b><span>03 — 03</span></div><div class="preview-success">${icon("check")}</div><h3 class="preview-heading preview-center">Tout est à sa place.</h3><p class="preview-description preview-center">Ton planning est enregistré sur ton téléphone.<br>Tu peux maintenant organiser tes révisions.</p><div class="preview-metrics"><div><b>7</b><span>cours cette semaine</span></div><div><b>50 min</b><span>un pas pour progresser</span></div></div><div class="preview-meta">${icon("wifi")}Planning consultable même hors ligne.</div>`,
   ];
@@ -245,7 +245,7 @@
 
   function renderPlanning() {
     const day = days[demoDay];
-    return `<div class="demo-panel-heading"><h3>Une semaine bien à toi.</h3><span>12 – 16 octobre · L2 SIR</span></div><div class="demo-days" aria-label="Jours du planning fictif">${days.map((entry, index) => `<button data-demo-day="${index}" aria-pressed="${index === demoDay}">${entry.short} <b>${entry.date}</b></button>`).join("")}</div><div id="demo-day-courses" aria-live="polite">${renderCourses(day)}</div>`;
+    return `<div class="demo-panel-heading"><h3>Une semaine bien à toi.</h3><span>12 – 16 octobre · Exemple</span></div><div class="demo-days" aria-label="Jours du planning fictif">${days.map((entry, index) => `<button data-demo-day="${index}" aria-pressed="${index === demoDay}">${entry.short} <b>${entry.date}</b></button>`).join("")}</div><div id="demo-day-courses" aria-live="polite">${renderCourses(day)}</div>`;
   }
   function renderCourses(day) {
     return day.courses
