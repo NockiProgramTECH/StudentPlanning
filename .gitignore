@@ -20,3 +20,9 @@ mobile/ios/Flutter/flutter_export_environment.sh
 .idea/
 # JavaScript tools
 node_modules/
+
+# Private Android signing material (configure only in local/CI secret storage)
+**/key.properties
+*.jks
+*.keystore
+*.p12

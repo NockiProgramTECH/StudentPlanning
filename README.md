@@ -129,3 +129,11 @@ un projet Android destiné aux étudiants de toutes les filières. Son espace b�
 les APK réellement publiés et propose un canal de retours. Voir le
 [guide bêta et retours](docs/BETA_ET_RETOURS.md). Les premiers tests L2 SIR restent un
 périmètre de validation technique, pas une restriction du public visé.
+
+## Build Android sur Codemagic
+
+Le fichier [`codemagic.yaml`](codemagic.yaml) fournit deux workflows manuels : APK debug
+pour un premier essai et APK bêta release avec signature privée. Créer le groupe
+`studia_android` avec l'URL **réelle du backend** dans `API_BASE_URL` ; le workflow release
+requiert en plus l'identité de signature Codemagic `studia_beta`. Les secrets OpenRouter
+et Chariow restent sur le backend. [Guide pas à pas](docs/CODEMAGIC_ANDROID.md).

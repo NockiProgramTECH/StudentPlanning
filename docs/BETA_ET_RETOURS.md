@@ -52,6 +52,8 @@ local et les révisions ne sont pas bloqués par le réglage du module de quiz.
 Au moment de ce changement, aucun APK ni release n'est publié dans le dépôt. Le site
 ne peut pas fabriquer un binaire et ne doit pas pointer vers un téléchargement fictif.
 Il faut une machine avec Flutter/Android SDK et **l'URL réelle de l'API HTTPS**.
+Pour construire dans le cloud sans installer Flutter localement, utiliser les workflows
+et le [guide Codemagic](CODEMAGIC_ANDROID.md).
 
 1. Exécuter les tests Flutter et les contrôles Android de
    [VERIFIER_ET_MONETISER.md](VERIFIER_ET_MONETISER.md).

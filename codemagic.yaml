@@ -1,0 +1,102 @@
+# Manual workflows. Select the branch containing this file in Codemagic.
+# Required environment group: studia_android, containing API_BASE_URL.
+# Signed beta additionally requires a Codemagic Android signing identity: studia_beta.
+workflows:
+  android-debug:
+    name: Android - test rapide (debug)
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      java: 17
+      groups:
+        - studia_android
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/.gradle/caches
+    scripts:
+      - &validate_config
+        name: Verifier la configuration
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR"
+          python3 mobile/tools/validate_build_config.py
+          flutter --version
+          flutter doctor -v
+          chmod +x mobile/android/gradlew
+      - &dependencies
+        name: Installer les dependances Flutter
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR/mobile"
+          flutter pub get --enforce-lockfile
+      - &tests
+        name: Analyser et tester
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR"
+          python3 -m unittest discover -s mobile/tools -p 'test_*.py'
+          cd mobile
+          # Existing lint notices remain visible; compilation errors still block.
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          flutter test
+      - name: Construire l'APK de test
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR/mobile"
+          flutter build apk --debug \
+            --build-number="$((BUILD_NUMBER + 1))" \
+            --dart-define="API_BASE_URL=$API_BASE_URL"
+          cd build/app/outputs/flutter-apk
+          cp app-debug.apk studia-test-debug.apk
+          sha256sum studia-test-debug.apk > studia-test-debug.apk.sha256
+    artifacts:
+      - mobile/build/app/outputs/flutter-apk/studia-test-debug.apk
+      - mobile/build/app/outputs/flutter-apk/studia-test-debug.apk.sha256
+
+  android-beta:
+    name: Android - beta signee (release)
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      java: 17
+      groups:
+        - studia_android
+      android_signing:
+        - studia_beta
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/.gradle/caches
+    scripts:
+      - *validate_config
+      - name: Verifier la signature privee
+        script: |
+          set -euo pipefail
+          : "${CM_KEYSTORE_PATH:?Configurer la signature Android studia_beta dans Codemagic}"
+          : "${CM_KEYSTORE_PASSWORD:?Mot de passe du keystore absent}"
+          : "${CM_KEY_ALIAS:?Alias de signature absent}"
+          : "${CM_KEY_PASSWORD:?Mot de passe de la cle absent}"
+          test -f "$CM_KEYSTORE_PATH"
+      - *dependencies
+      - *tests
+      - name: Construire et verifier l'APK beta
+        script: |
+          set -euo pipefail
+          cd "$CM_BUILD_DIR/mobile"
+          flutter build apk --release \
+            --build-number="$((BUILD_NUMBER + 1))" \
+            --dart-define="API_BASE_URL=$API_BASE_URL"
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:?Android SDK absent}}"
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk
+          cd build/app/outputs/flutter-apk
+          cp app-release.apk studia-beta.apk
+          sha256sum studia-beta.apk > studia-beta.apk.sha256
+    artifacts:
+      - mobile/build/app/outputs/flutter-apk/studia-beta.apk
+      - mobile/build/app/outputs/flutter-apk/studia-beta.apk.sha256
+# No automatic release/store publishing: test the APK on a phone first.
