@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
+import '../models/course_material.dart';
 import '../models/schedule.dart';
 import '../revisions/revision_session.dart';
 
@@ -10,19 +11,25 @@ class ScheduleStore {
 
   Future<Database> get database async => _database ??= await openDatabase(
     path.join(await getDatabasesPath(), 'student_planning.db'),
-    version: 2,
+    version: 3,
     onCreate: (db, version) async {
       await db.execute('CREATE TABLE schedules (class_name TEXT NOT NULL, week_start TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(class_name, week_start))');
       await _createRevisions(db);
+      await _createCoursePacks(db);
     },
     onUpgrade: (db, oldVersion, newVersion) async {
       if (oldVersion < 2) await _createRevisions(db);
+      if (oldVersion < 3) await _createCoursePacks(db);
     },
   );
 
   static Future<void> _createRevisions(Database db) async {
     await db.execute('CREATE TABLE revisions (id INTEGER PRIMARY KEY, class_name TEXT NOT NULL, week_start TEXT NOT NULL, subject TEXT NOT NULL, start_at TEXT NOT NULL, end_at TEXT NOT NULL, completed INTEGER NOT NULL DEFAULT 0)');
     await db.execute('CREATE INDEX revisions_week ON revisions(class_name, week_start)');
+  }
+
+  static Future<void> _createCoursePacks(Database db) async {
+    await db.execute('CREATE TABLE IF NOT EXISTS course_packs (id TEXT PRIMARY KEY, subject TEXT NOT NULL, updated_at TEXT NOT NULL, payload TEXT NOT NULL)');
   }
 
   static String _dateKey(DateTime day) =>
@@ -98,6 +105,23 @@ class ScheduleStore {
       'class_name': schedule.className,
       'week_start': schedule.toJson()['week_start'],
       'payload': jsonEncode(schedule.toJson()),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<CourseDocumentModel>> courseDocuments() async {
+    final rows = await (await database).query('course_packs', orderBy: 'updated_at DESC');
+    return rows
+        .map((r) => CourseDocumentModel.fromJson(jsonDecode(r['payload'] as String) as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> saveCourseDocument(CourseDocumentModel document) async {
+    if (document.isDemo) throw StateError('Un exemple ne peut pas être enregistré');
+    await (await database).insert('course_packs', {
+      'id': document.id,
+      'subject': document.subject,
+      'updated_at': DateTime.now().toIso8601String(),
+      'payload': jsonEncode(document.toJson()),
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 }

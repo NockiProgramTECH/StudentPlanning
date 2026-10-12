@@ -70,11 +70,15 @@ class MainActivity : FlutterActivity() {
                 "testNotification" -> {
                     if (!allowed(this)) result.error("permission", "Activez les notifications", null)
                     else {
+                        val targetChannel = (call.arguments as? String)
+                            ?: call.argument<String>("channel")
+                            ?: "revisions"
+                        val isCourse = targetChannel == "courses"
                         StudyAlarmReceiver().onReceive(this, Intent(this, StudyAlarmReceiver::class.java)
-                            .putExtra("id", 2147000000)
-                            .putExtra("title", "Rappel de révision (test)")
-                            .putExtra("body", "Les alertes locales fonctionnent sur ce téléphone.")
-                            .putExtra("channel", "revisions"))
+                            .putExtra("id", if (isCourse) 2147000001 else 2147000000)
+                            .putExtra("title", if (isCourse) "Cours dans 1 heure (test)" else "Rappel de révision (test)")
+                            .putExtra("body", if (isCourse) "Le son Studia des cours du matin fonctionne sur ce téléphone." else "Les alertes locales fonctionnent sur ce téléphone.")
+                            .putExtra("channel", if (isCourse) "courses" else "revisions"))
                         result.success(null)
                     }
                 }
@@ -199,8 +203,8 @@ class StudyAlarmReceiver : BroadcastReceiver() {
         // required for existing installations that already created silent/default
         // "courses" and "revisions" channels. Users may still mute these channels.
         val channelId = if (isCourse) "courses_studia_v2" else "revisions_studia_v2"
-        val soundName = if (isCourse) "studia_course" else "studia_revision"
-        val sound = Uri.parse("android.resource://${context.packageName}/raw/$soundName")
+        val soundRes = if (isCourse) R.raw.studia_course else R.raw.studia_revision
+        val sound = Uri.parse("android.resource://${context.packageName}/$soundRes")
         val attributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_NOTIFICATION)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()

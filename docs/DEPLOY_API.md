@@ -38,7 +38,22 @@ Configurer chez l'hébergeur : port exposé (la variable `PORT` est prise en com
 
 D'abord déployer **sans `OPENROUTER_API_KEY`** : le PDF L2 SIR reconnu sera importable, les documents non reconnus répondront 503 sans coût IA. Après ajout d'une authentification réelle et de quotas, configurer `OPENROUTER_API_KEY` comme **secret serveur**, `OPENROUTER_MODEL` si nécessaire. Ne jamais la mettre dans Flutter, dans l'image Docker, dans Git, ni dans une URL. L'IA reçoit des extraits textuels filtrés, pas le PDF brut, mais ces extraits peuvent contenir des données personnelles.
 
-Après déploiement, remplacer **`https://api.votre-domaine.tld`** ci-dessous par l'URL HTTPS réelle, et refaire les trois vérifications (santé, OpenAPI et import) contre cette URL. Une réponse 200 sur l'URL publique confirme la mise en ligne ; une réponse 200 locale ne la confirme pas.
+Après déploiement, remplacer **`<MON_URL_PUBLIQUE_HTTPS>`** ci-dessous par l'URL HTTPS réelle, et exécuter le script de vérification de bout en bout depuis `backend/` :
+
+```bash
+python -m app.verify_remote <MON_URL_PUBLIQUE_HTTPS>
+```
+
+Ou avec `curl` :
+
+```bash
+curl -fsS <MON_URL_PUBLIQUE_HTTPS>/health
+curl -fsS -F 'file=@tests/Emploi_temps_12 -17-oct 2026.pdf;type=application/pdf' \
+  -F 'class_name=L2 SIR' -F 'week_start=2026-10-12' \
+  <MON_URL_PUBLIQUE_HTTPS>/api/import
+```
+
+Une réponse 200 sur l'URL publique confirme la mise en ligne (santé `{"status":"ok"}` et 7 cours L2 SIR sur la page 6) ; une réponse 200 locale ne la confirme pas.
 
 ## Connecter le téléphone
 
@@ -46,9 +61,11 @@ L'URL du backend doit être fournie **au build Flutter** ; l'application ne cont
 
 ```bash
 cd mobile
-flutter run -d <ID_ANDROID> --dart-define=API_BASE_URL=https://api.votre-domaine.tld
+flutter run -d <ID_ANDROID> --dart-define=API_BASE_URL=<MON_URL_PUBLIQUE_HTTPS>
+# APK debug (essai direct sur téléphone) :
+flutter build apk --debug --dart-define=API_BASE_URL=<MON_URL_PUBLIQUE_HTTPS>
 # Puis, après validation de l'installation et de la signature release :
-flutter build apk --release --dart-define=API_BASE_URL=https://api.votre-domaine.tld
+flutter build apk --release --dart-define=API_BASE_URL=<MON_URL_PUBLIQUE_HTTPS>
 ```
 
 Pour le développement seulement : `--dart-define=API_BASE_URL=http://10.0.2.2:8000` (émulateur), ou l'IP LAN de l'ordinateur (téléphone sur le même réseau). **Une version release refuse HTTP** pour l'import. Sans URL configurée, l'interface signale explicitement que le serveur manque au lieu d'essayer une adresse privée qui ne marcherait que chez le développeur. Les options `--dart-define` sont embarquées dans l'APK : n'y placer aucun secret.
@@ -57,6 +74,6 @@ Pour le développement seulement : `--dart-define=API_BASE_URL=http://10.0.2.2:8
 
 - Le backend **n'authentifie pas les utilisateurs et ne limite pas le nombre de requêtes**. Les contrôles actuels (PDF jusqu'à 10 Mo, 20 pages, texte borné) ne remplacent ni quotas, ni protection contre les abus/attaques, ni plafonnement des coûts IA. Éviter de rendre OpenRouter accessible via cette API tant que ces protections ne sont pas mises en place. Une clé statique dans l'APK **n'est pas** une solution : elle peut être extraite.
 - Pour un pilote, n'inviter qu'un groupe limité et utiliser au besoin des restrictions d'accès au niveau de l'hébergeur ; cela ne vaut pas une authentification par étudiant. Protéger HTTPS, logs (ne pas journaliser le texte des PDF), ressources CPU/mémoire et sauvegardes si des comptes sont ajoutés plus tard. Contrôler le comportement sur plusieurs PDF et sur un vrai téléphone avant distribution.
-- Ce dépôt ne contient **ni intégration Chariow, ni quiz de supports de cours, ni OCR**. Ce guide ne déploie que l'API actuelle d'import d'emploi du temps et de comparaison.
+- Ce dépôt inclut désormais le module pilote **Supports de cours & Quiz IA progressif** (`/api/courses/...`), protégé par authentification Bearer (`STUDIA_ACCESS_TOKENS`) et quotas journaliers/mensuels de tokens et de coût (`STUDIA_MAX_DOCS_PER_DAY`, `STUDIA_MAX_QUIZ_REQUESTS_PER_DAY`, `STUDIA_MAX_TOKENS_PER_DAY`, `STUDIA_MAX_COST_USD_PER_MONTH`). Il ne contient **ni intégration Chariow** (à décider après choix de l'offre et des règles de licence), **ni OCR**.
 
 **Validation ici :** lancement Uvicorn sur `0.0.0.0:8020`, `GET /health` 200, OpenAPI 200, `POST /api/import` avec le PDF L2 SIR : 200 et 7 cours. Le processus de test a ensuite été arrêté. L'image Docker n'a pas pu être construite dans cet environnement (Docker absent) ; le build Flutter et l'accessibilité depuis Internet restent aussi à vérifier sur les environnements cibles.

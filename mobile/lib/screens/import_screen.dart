@@ -21,7 +21,10 @@ class ImportScreen extends StatefulWidget {
 
 class _ImportScreenState extends State<ImportScreen> {
   late final classController = TextEditingController(text: widget.initialClass);
-  late DateTime monday = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+  late DateTime monday = () {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
+  }();
   Uint8List? bytes;
   String? filename;
 
@@ -55,7 +58,10 @@ class _ImportScreenState extends State<ImportScreen> {
   Future<void> chooseWeek() async {
     final date = await showDatePicker(context: context, initialDate: monday,
       firstDate: DateTime(2020), lastDate: DateTime(2100), helpText: 'Choisir un jour de la semaine');
-    if (date != null) setState(() => monday = date.subtract(Duration(days: date.weekday - 1)));
+    if (date != null) {
+      final clean = DateTime(date.year, date.month, date.day);
+      setState(() => monday = clean.subtract(Duration(days: clean.weekday - 1)));
+    }
   }
 
   Future<void> process() async {
@@ -80,7 +86,7 @@ class _ImportScreenState extends State<ImportScreen> {
         schedule: result.schedule, changes: result.changes, onSave: widget.onSaved)));
       if (mounted && saved == true) Navigator.of(context).pop();
     } catch (e) {
-      if (mounted) setState(() => error = e.toString().replaceFirst('Exception: ', ''));
+      if (mounted) setState(() => error = formatApiError(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -120,8 +126,18 @@ class _ImportScreenState extends State<ImportScreen> {
       const SizedBox(height: 18),
       if (widget.previewMode) const Text('MODE MAQUETTE · Le document affiché est fictif. Aucun fichier n’est envoyé.',
         style: TextStyle(color: teal, fontWeight: FontWeight.w700, fontSize: 12))
-      else const Text('Le texte extrait du PDF sera envoyé au fournisseur IA configuré sur le serveur. Le PDF brut ne lui est pas transmis.',
-        style: TextStyle(color: muted, fontSize: 12, height: 1.5)),
+      else ...[
+        const Text('Le texte extrait du PDF sera envoyé au fournisseur IA configuré sur le serveur. Le PDF brut ne lui est pas transmis.',
+          style: TextStyle(color: muted, fontSize: 12, height: 1.5)),
+        if (apiBaseUrl.trim().isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 10),
+            child: Text(
+              'URL serveur absente de ce build : lancez ou compilez avec --dart-define=API_BASE_URL=https://votre-domaine.',
+              style: TextStyle(color: Color(0xFFB64C4C), fontSize: 12, fontWeight: FontWeight.w700),
+            ),
+          ),
+      ],
       if (error != null) Padding(padding: const EdgeInsets.only(top: 18), child: Text(error!, style: const TextStyle(color: Color(0xFFB64C4C)))),
       const SizedBox(height: 25),
       FilledButton.icon(onPressed: loading ? null : process,

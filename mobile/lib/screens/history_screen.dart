@@ -7,7 +7,8 @@ import 'planning_screen.dart';
 class HistoryScreen extends StatelessWidget {
   final List<Schedule> schedules;
   final bool isDemo;
-  const HistoryScreen({super.key, required this.schedules, this.isDemo = false});
+  final ValueChanged<Schedule>? onSelect;
+  const HistoryScreen({super.key, required this.schedules, this.isDemo = false, this.onSelect});
   @override
   Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Historique'), backgroundColor: canvas),
     body: ListView(padding: const EdgeInsets.all(22), children: [
@@ -26,9 +27,13 @@ class HistoryScreen extends StatelessWidget {
         subtitle: Text('${s.className}  ·  ${s.courses.length} cours'),
         trailing: const Icon(Icons.chevron_right_rounded),
         onTap: () {
-          Navigator.of(context).push(MaterialPageRoute<void>(
-            builder: (_) => PlanningScreen(schedule: s),
-          ));
+          if (onSelect != null) {
+            onSelect!(s);
+          } else {
+            Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => PlanningScreen(schedule: s),
+            ));
+          }
         },
       )))
     ]));

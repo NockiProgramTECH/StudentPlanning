@@ -53,11 +53,14 @@ class LocalReminders {
     }
   }
 
-  Future<void> testNotification() async {
+  Future<void> testNotification({String channel = 'revisions'}) async {
     if (!isAndroid) throw UnsupportedError('Notifications disponibles uniquement sur Android.');
     if (nativeMissing) throw _rebuildRequired;
     try {
-      await _channel.invokeMethod<void>('testNotification');
+      await _channel.invokeMethod<void>(
+        'testNotification',
+        channel == 'revisions' ? null : {'channel': channel},
+      );
     } on MissingPluginException {
       nativeMissing = true;
       throw _rebuildRequired;
