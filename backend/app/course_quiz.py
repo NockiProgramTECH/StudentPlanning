@@ -280,6 +280,20 @@ class CourseStore:
                     event TEXT NOT NULL,
                     processed_at TEXT NOT NULL
                 );
+
+                CREATE TABLE IF NOT EXISTS feedbacks_and_suggestions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    feedback_type TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    device_context TEXT,
+                    created_at TEXT NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_feedbacks_created_at
+                    ON feedbacks_and_suggestions(created_at DESC);
+                CREATE INDEX IF NOT EXISTS idx_feedbacks_type
+                    ON feedbacks_and_suggestions(feedback_type);
                 """
             )
 
@@ -853,3 +867,76 @@ class CourseStore:
                     (clean_delivery, pulse_id, event, now_iso),
                 )
         return {"status": "processed", "event": event, "delivery_id": clean_delivery}
+
+    def create_feedback(
+        self,
+        *,
+        feedback_type: str,
+        category: str,
+        title: str,
+        description: str,
+        device_context: str | None = None,
+    ) -> dict:
+        now_iso, _, _ = self._now_keys()
+        clean_type = feedback_type.strip()
+        clean_cat = category.strip()
+        clean_title = title.strip()
+        clean_desc = description.strip()
+        clean_context = (device_context or "").strip() or None
+
+        with self._connect() as conn:
+            cursor = conn.execute(
+                """
+                INSERT INTO feedbacks_and_suggestions
+                    (feedback_type, category, title, description, device_context, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (clean_type, clean_cat, clean_title, clean_desc, clean_context, now_iso),
+            )
+            feedback_id = getattr(cursor, "lastrowid", None)
+            if not feedback_id:
+                row = conn.execute(
+                    "SELECT id FROM feedbacks_and_suggestions WHERE created_at = ? ORDER BY id DESC LIMIT 1",
+                    (now_iso,),
+                ).fetchone()
+                feedback_id = row["id"] if row else 1
+
+        return {
+            "id": int(feedback_id),
+            "feedback_type": clean_type,
+            "category": clean_cat,
+            "title": clean_title,
+            "description": clean_desc,
+            "device_context": clean_context,
+            "created_at": now_iso,
+        }
+
+    def list_feedbacks(
+        self,
+        limit: int = 50,
+        feedback_type: str | None = None,
+    ) -> list[dict]:
+        with self._connect() as conn:
+            if feedback_type:
+                rows = conn.execute(
+                    """
+                    SELECT id, feedback_type, category, title, description, device_context, created_at
+                    FROM feedbacks_and_suggestions
+                    WHERE feedback_type = ?
+                    ORDER BY created_at DESC, id DESC
+                    LIMIT ?
+                    """,
+                    (feedback_type.strip(), limit),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """
+                    SELECT id, feedback_type, category, title, description, device_context, created_at
+                    FROM feedbacks_and_suggestions
+                    ORDER BY created_at DESC, id DESC
+                    LIMIT ?
+                    """,
+                    (limit,),
+                ).fetchall()
+            return [dict(r) for r in rows]
+

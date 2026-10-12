@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="styles.css" />
     <script src="app.js" defer></script>
     <script src="beta.js" defer></script>
+    <script src="feedback.js" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#contenu">Aller au contenu</a>
@@ -95,6 +96,20 @@
         <symbol id="i-plus" viewBox="0 0 24 24">
           <path d="M5 12h14M12 5v14" />
         </symbol>
+        <symbol id="i-message" viewBox="0 0 24 24">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </symbol>
+        <symbol id="i-lightbulb" viewBox="0 0 24 24">
+          <path d="M9 18h6m-4 3h2M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7Z" />
+        </symbol>
+        <symbol id="i-mail" viewBox="0 0 24 24">
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+        </symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24">
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </symbol>
       </defs>
     </svg>
 
@@ -108,6 +123,7 @@
         <nav id="main-nav" aria-label="Navigation principale">
           <a href="#experience">L’expérience</a
           ><a href="#methode">Comment ça marche</a
+          ><a href="#retours">Retours & suggestions</a
           ><a href="#questions">Questions fréquentes</a>
         </nav>
         <a class="button button-small button-dark nav-cta" href="#beta"
@@ -694,6 +710,298 @@
       </section>
 
       <section
+        class="feedback-section container"
+        id="retours"
+        aria-labelledby="feedback-title"
+      >
+        <div class="feedback-header reveal">
+          <span class="eyebrow"
+            ><span class="status-dot"></span> CO-CRÉATION · RETOURS &amp;
+            SUGGESTIONS</span
+          >
+          <h2 id="feedback-title">
+            Fais grandir l’application.<br /><span class="serif"
+              >Tes retours &amp; suggestions comptent.</span
+            >
+          </h2>
+          <p>
+            Un problème rencontré avec ton planning PDF ? Une idée pour rendre
+            tes révisions encore plus efficaces ? Partage un retour d’expérience
+            ou propose de nouvelles suggestions directement pour l’application.
+          </p>
+        </div>
+
+        <div class="feedback-grid">
+          <div class="feedback-card reveal">
+            <div
+              class="feedback-type-toggle"
+              role="tablist"
+              aria-label="Type de proposition"
+            >
+              <button
+                type="button"
+                role="tab"
+                id="tab-suggestion"
+                aria-selected="true"
+                aria-controls="feedback-form"
+                class="type-toggle-btn active"
+                data-type="suggestion"
+              >
+                <svg><use href="#i-lightbulb" /></svg>
+                <span>Demander une suggestion</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="tab-retour"
+                aria-selected="false"
+                aria-controls="feedback-form"
+                class="type-toggle-btn"
+                data-type="retour"
+              >
+                <svg><use href="#i-message" /></svg>
+                <span>Faire un retour</span>
+              </button>
+            </div>
+
+            <form id="feedback-form" class="feedback-form" novalidate>
+              <div class="form-group">
+                <span id="feedback-category-label" class="form-label"
+                  >Domaine concerné dans l’application</span
+                >
+                <div
+                  class="feedback-category-pills"
+                  role="radiogroup"
+                  aria-labelledby="feedback-category-label"
+                >
+                  <button
+                    type="button"
+                    class="category-pill active"
+                    data-category="planning"
+                    aria-pressed="true"
+                  >
+                    <svg><use href="#i-calendar" /></svg> Emploi du temps
+                  </button>
+                  <button
+                    type="button"
+                    class="category-pill"
+                    data-category="quiz"
+                    aria-pressed="false"
+                  >
+                    <svg><use href="#i-spark" /></svg> Quiz IA &amp; Cours
+                  </button>
+                  <button
+                    type="button"
+                    class="category-pill"
+                    data-category="revisions"
+                    aria-pressed="false"
+                  >
+                    <svg><use href="#i-clock" /></svg> Révisions &amp; Rappels
+                  </button>
+                  <button
+                    type="button"
+                    class="category-pill"
+                    data-category="ui"
+                    aria-pressed="false"
+                  >
+                    <svg><use href="#i-book" /></svg> Design &amp; Ergonomie
+                  </button>
+                  <button
+                    type="button"
+                    class="category-pill"
+                    data-category="autre"
+                    aria-pressed="false"
+                  >
+                    <svg><use href="#i-plus" /></svg> Autre idée
+                  </button>
+                </div>
+                <input
+                  type="hidden"
+                  id="feedback-category"
+                  name="category"
+                  value="planning"
+                />
+              </div>
+
+              <div class="form-group quick-ideas-group" id="quick-ideas-box">
+                <span class="quick-ideas-label">
+                  <svg><use href="#i-spark" /></svg>
+                  <span class="quick-ideas-label-text"
+                    >Suggestions populaires (clique pour pré-remplir) :</span
+                  >
+                </span>
+                <div class="quick-ideas-list" id="quick-ideas-list"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="feedback-title-input" id="feedback-subject-label"
+                  >Titre de ta suggestion pour l’application</label
+                >
+                <input
+                  type="text"
+                  id="feedback-title-input"
+                  name="title"
+                  class="form-input"
+                  placeholder="Ex : Exporter les cours vers mon calendrier Google ou iCal"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="feedback-desc-input" id="feedback-desc-label"
+                  >Description de la fonctionnalité souhaitée</label
+                >
+                <textarea
+                  id="feedback-desc-input"
+                  name="description"
+                  class="form-textarea"
+                  rows="4"
+                  placeholder="Explique ce que tu aimerais voir dans l’application et en quoi cela t’aiderait pendant tes études…"
+                  required
+                ></textarea>
+              </div>
+
+              <div
+                class="form-group optional-context"
+                id="optional-context-group"
+              >
+                <label for="feedback-context-input" id="feedback-context-label">
+                  Version de l’application ou modèle de téléphone
+                  <small>(facultatif)</small>
+                </label>
+                <input
+                  type="text"
+                  id="feedback-context-input"
+                  name="context"
+                  class="form-input"
+                  placeholder="Ex : Samsung Galaxy A52, Android 13 (sans identifiant personnel)"
+                />
+              </div>
+
+              <div class="feedback-actions">
+                <button
+                  type="submit"
+                  id="btn-submit-db"
+                  class="button button-dark"
+                >
+                  <svg><use href="#i-check" /></svg>
+                  <span>Enregistrer en base de données</span>
+                </button>
+                <a
+                  id="btn-github-issue"
+                  class="button button-outline"
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Ouvrir également une issue publique sur GitHub"
+                >
+                  <span>Sur GitHub</span>
+                  <svg><use href="#i-up-right" /></svg>
+                </a>
+                <a
+                  id="btn-email-feedback"
+                  class="button button-ghost"
+                  href="#"
+                  title="Envoyer également par e-mail"
+                >
+                  <svg><use href="#i-mail" /></svg>
+                  <span>Par e-mail</span>
+                </a>
+                <button
+                  type="button"
+                  id="btn-copy-feedback"
+                  class="button button-ghost"
+                  title="Copier le message formaté"
+                >
+                  <svg><use href="#i-copy" /></svg>
+                  <span>Copier</span>
+                </button>
+              </div>
+
+              <div
+                id="feedback-status-msg"
+                class="feedback-status-msg"
+                role="status"
+                aria-live="polite"
+                hidden
+              ></div>
+
+              <div class="feedback-privacy-note">
+                <svg><use href="#i-shield" /></svg>
+                <p>
+                  Tes retours aident directement à perfectionner Studia. Merci
+                  de ne déposer aucun code d’accès, mot de passe, e-mail
+                  personnel ni relevé ou document étudiant non anonymisé.
+                </p>
+              </div>
+            </form>
+          </div>
+
+          <div class="feedback-community reveal">
+            <div class="community-box">
+              <span class="eyebrow">ROADMAP DE L’APPLICATION</span>
+              <h3>Idées et suggestions à l’étude</h3>
+              <p>
+                Ces propositions formulées par des étudiants lors des tests sont
+                actuellement examinées pour les futures versions de Studia :
+              </p>
+              <ul class="community-ideas-list">
+                <li>
+                  <span class="idea-tag status-planned">Prévu</span>
+                  <div class="idea-content">
+                    <b>Synchronisation calendrier (iCal / Google)</b>
+                    <p>
+                      Export en un clic des cours validés pour alimenter ton
+                      agenda favori.
+                    </p>
+                  </div>
+                </li>
+                <li>
+                  <span class="idea-tag status-dev">En cours</span>
+                  <div class="idea-content">
+                    <b>Mode sombre adapté aux révisions de nuit</b>
+                    <p>
+                      Palette contrastée et économe en batterie pour travailler
+                      tard l’esprit reposé.
+                    </p>
+                  </div>
+                </li>
+                <li>
+                  <span class="idea-tag status-review">À l’étude</span>
+                  <div class="idea-content">
+                    <b>Widget écran d’accueil Android</b>
+                    <p>
+                      Afficher la prochaine matière, la salle et l’horaire dès
+                      l’allumage du téléphone.
+                    </p>
+                  </div>
+                </li>
+                <li>
+                  <span class="idea-tag status-review">À l’étude</span>
+                  <div class="idea-content">
+                    <b>Partage de quiz entre camarades</b>
+                    <p>
+                      Transmettre une sélection de cartes de révision générées au
+                      sein d’une même promo.
+                    </p>
+                  </div>
+                </li>
+              </ul>
+              <div class="community-callout">
+                <svg><use href="#i-spark" /></svg>
+                <div>
+                  <b>Une autre envie pour ton quotidien étudiant ?</b>
+                  <p>
+                    Sélectionne le mode suggestion ci-contre et dis-nous tout.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
         class="faq-section container"
         id="questions"
         aria-labelledby="faq-title"
@@ -841,6 +1149,7 @@
             ><svg><use href="#i-book" /></svg><i></i></span
           >studia<span class="logo-dot">.</span></a
         ><span>Moins de chaos. Plus de déclics.</span
+        ><a href="#retours">Retours & suggestions</a
         ><a
           href="https://github.com/NockiProgramTECH/StudentPlanning"
           target="_blank"

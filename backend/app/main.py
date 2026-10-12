@@ -25,6 +25,8 @@ from .schemas import (
     ComparisonRequest,
     CourseDocumentDetail,
     CourseDocumentSummary,
+    FeedbackCreateRequest,
+    FeedbackResponse,
     GenerateQuestionsRequest,
     ImportResult,
     LicenseActivationRequest,
@@ -368,6 +370,34 @@ async def chariow_pulse_webhook(
         event=event,
         payload=payload,
     )
+
+
+@app.post("/api/feedbacks", response_model=FeedbackResponse, status_code=201)
+def submit_feedback(
+    body: FeedbackCreateRequest,
+    store: CourseStore = Depends(get_course_store),
+):
+    try:
+        record = store.create_feedback(
+            feedback_type=body.feedback_type,
+            category=body.category,
+            title=body.title,
+            description=body.description,
+            device_context=body.device_context,
+        )
+        return FeedbackResponse(**record)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Erreur d'enregistrement : {exc}") from exc
+
+
+@app.get("/api/feedbacks", response_model=list[FeedbackResponse])
+def get_feedbacks(
+    feedback_type: str | None = None,
+    limit: int = 50,
+    store: CourseStore = Depends(get_course_store),
+):
+    records = store.list_feedbacks(limit=min(limit, 100), feedback_type=feedback_type)
+    return [FeedbackResponse(**r) for r in records]
 
 
 app.mount("/", StaticFiles(directory=VITRINE_DIR, html=True), name="vitrine")
