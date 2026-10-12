@@ -24,6 +24,7 @@ function site(fetchImpl) {
   };
   dom.window.eval(fs.readFileSync(path.join(root, "app.js"), "utf8"));
   dom.window.eval(fs.readFileSync(path.join(root, "beta.js"), "utf8"));
+  dom.window.eval(fs.readFileSync(path.join(root, "feedback.js"), "utf8"));
   return dom;
 }
 function click(doc, selector) {
@@ -51,7 +52,9 @@ test("French site has valid anchors, local assets and an honest development stat
     /versions bêta Android sont proposées/,
   );
   assert.match(doc.body.textContent, /Données fictives/);
-  assert.equal(doc.querySelectorAll("form,iframe").length, 0);
+  assert.equal(doc.querySelectorAll("iframe").length, 0);
+  assert.equal(doc.querySelectorAll("form").length, 1);
+  assert.equal(doc.querySelector("form").id, "feedback-form");
   dom.window.close();
 });
 
@@ -374,3 +377,99 @@ test("feedback is a real prefilled issue with public-data warning, not a fake fo
   assert.match(url.searchParams.get("body"), /aucun code d’accès/);
   dom.window.close();
 });
+
+test("feedback and suggestion section toggles modes, updates inputs, and handles quick suggestions", () => {
+  const dom = site();
+  const doc = dom.window.document;
+
+  const section = doc.querySelector("#retours");
+  assert.ok(section, "Missing #retours section");
+
+  // Par défaut, mode suggestion sélectionné
+  const tabSug = doc.querySelector("#tab-suggestion");
+  const tabRet = doc.querySelector("#tab-retour");
+  assert.equal(tabSug.getAttribute("aria-selected"), "true");
+  assert.equal(tabRet.getAttribute("aria-selected"), "false");
+  assert.match(
+    doc.querySelector("#feedback-subject-label").textContent,
+    /suggestion/i,
+  );
+
+  // Vérifier la présence des suggestions rapides initiales
+  const quickChips = doc.querySelectorAll(".quick-idea-chip");
+  assert.ok(quickChips.length >= 4);
+
+  // Cliquer sur une suggestion rapide doit pré-remplir le titre et la description
+  click(doc, ".quick-idea-chip");
+  const titleInput = doc.querySelector("#feedback-title-input");
+  const descInput = doc.querySelector("#feedback-desc-input");
+  assert.ok(titleInput.value.length > 0);
+  assert.ok(descInput.value.length > 0);
+
+  // Basculer en mode retour
+  click(doc, "#tab-retour");
+  assert.equal(tabSug.getAttribute("aria-selected"), "false");
+  assert.equal(tabRet.getAttribute("aria-selected"), "true");
+  assert.match(
+    doc.querySelector("#feedback-subject-label").textContent,
+    /retour/i,
+  );
+
+  // Vérifier le changement de catégorie
+  click(doc, '[data-category="quiz"]');
+  assert.equal(doc.querySelector("#feedback-category").value, "quiz");
+  assert.equal(
+    doc.querySelector('[data-category="quiz"]').getAttribute("aria-pressed"),
+    "true",
+  );
+
+  // Tester l'action GitHub
+  titleInput.value = "Bug affichage calendrier";
+  titleInput.dispatchEvent(new dom.window.Event("input"));
+  descInput.value = "Les cours se chevauchent le vendredi après-midi.";
+  descInput.dispatchEvent(new dom.window.Event("input"));
+
+  const btnGithub = doc.querySelector("#btn-github-issue");
+  assert.ok(btnGithub.href, "GitHub issue URL should be set");
+  const parsedGithub = new URL(btnGithub.href);
+  assert.equal(parsedGithub.origin, "https://github.com");
+  assert.equal(
+    parsedGithub.pathname,
+    "/NockiProgramTECH/StudentPlanning/issues/new",
+  );
+  assert.match(parsedGithub.searchParams.get("title"), /\[Retour\]/);
+  assert.match(parsedGithub.searchParams.get("title"), /Bug affichage/);
+  assert.match(parsedGithub.searchParams.get("body"), /chevauchent/);
+  assert.match(parsedGithub.searchParams.get("labels"), /feedback/);
+
+  // Tester l'action e-mail
+  const btnEmail = doc.querySelector("#btn-email-feedback");
+  assert.match(btnEmail.href, /^mailto:/);
+  assert.match(btnEmail.href, /contact@studia-app.fr/);
+  assert.match(btnEmail.href, /Bug%20affichage/);
+
+  // Tester le basculement retour vers suggestion
+  click(doc, "#tab-suggestion");
+  assert.equal(tabSug.getAttribute("aria-selected"), "true");
+  titleInput.value = "Mode hors-ligne pour les quiz";
+  titleInput.dispatchEvent(new dom.window.Event("input"));
+  const parsedSuggestionGithub = new URL(btnGithub.href);
+  assert.match(parsedSuggestionGithub.searchParams.get("title"), /\[Suggestion\]/);
+  assert.match(parsedSuggestionGithub.searchParams.get("title"), /Mode hors-ligne/);
+  assert.match(parsedSuggestionGithub.searchParams.get("labels"), /enhancement/);
+
+  // Tester le bouton copier
+  let copiedText = null;
+  dom.window.navigator.clipboard = {
+    writeText: async (text) => {
+      copiedText = text;
+    },
+  };
+  click(doc, "#btn-copy-feedback");
+  return Promise.resolve().then(() => {
+    assert.ok(copiedText, "Copied text should not be null");
+    assert.match(copiedText, /\[Suggestion\]/);
+    dom.window.close();
+  });
+});
+

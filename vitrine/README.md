@@ -57,7 +57,7 @@ Publier ces fichiers sur un hébergeur statique HTTPS :
 
 - `index.html`
 - `styles.css`
-- `app.js` et `beta.js`
+- `app.js`, `beta.js` et `feedback.js`
 - `assets/` (inclure les licences des polices)
 
 Aucune variable d'environnement et aucune clé API nécessaires. Ne pas publier
@@ -68,7 +68,7 @@ Les polices sont hébergées localement et distribuées sous licence SIL Open Fo
 voir `assets/fonts/*-LICENSE.txt`. Les icônes SVG et illustrations sont intégrées localement.
 
 
-## Bêta Android et retours
+## Bêta Android, retours et suggestions
 
 La navigation et le bouton principal dirigent vers `#beta`. Un clic de vérification consulte
 les 30 releases publiques les plus récentes du dépôt. Seules les préversions ou les tags
@@ -81,9 +81,19 @@ un unique APK est acceptée. Plusieurs APK spécifiques à des architectures san
 universel ne sont pas choisis arbitrairement : les versions officielles restent accessibles.
 Pas d'appel réseau automatique ni de clé GitHub côté site.
 
-La section propose un retour prérempli via une issue GitHub. Ce service demande un compte ;
-les retours sont publics. Le message et la page avertissent de ne pas y déposer de code,
-e-mail personnel ni document étudiant non anonymisé. Aucun faux formulaire de collecte.
+### Espace retours et suggestions (#retours)
+
+La vitrine intègre une section interactive dédiée permettant de :
+- **Demander une suggestion pour l'application** : proposer une nouvelle fonctionnalité (export agenda iCal/Google, widget Android, mode sombre, partage promo, etc.) avec labels et modèles adaptés.
+- **Faire un retour d'expérience** : signaler un bug, une difficulté de lecture PDF ou un retour sur l'ergonomie.
+- **Pré-remplissage rapide** : des suggestions populaires et cas types sont directement cliquables pour inspirer et faciliter la saisie.
+- **Canaux de partage adaptés** :
+  - Création directe d'une issue GitHub avec gabarit structuré.
+  - Préparation d'un message `mailto` pour les étudiants sans compte GitHub.
+  - Copie instantanée du message formaté dans le presse-papier.
+- **Roadmap participative** : aperçu des idées étudiantes actuellement en cours d'étude, prévues ou en développement.
+
+Le message et la page avertissent de ne pas y déposer de code, e-mail personnel ni document étudiant non anonymisé. Aucune collecte cachée de données.
 
 La procédure pour préparer l'APK et organiser une semaine d'essai est décrite dans
 [`docs/BETA_ET_RETOURS.md`](../docs/BETA_ET_RETOURS.md). Le bouton ne construit pas l'APK et
