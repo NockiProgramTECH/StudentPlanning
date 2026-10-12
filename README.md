@@ -109,3 +109,20 @@ flutter run --dart-define=SHOW_MOCKUPS=true
 ```
 
 Sans `SHOW_MOCKUPS`, l'icône « Voir les maquettes » en haut de l'accueil ouvre cette galerie. Le mode maquette Flutter n'appelle pas l'API et n'enregistre aucun planning. L'onglet de révisions Android se configure après validation d'un vrai PDF ; les séances de la galerie HTML restent fictives. L'aperçu HTML est un **prototype visuel séparé**, pas une compilation Flutter Web. La compilation Flutter reste à vérifier sur une machine avec Flutter SDK.
+
+## Site vitrine Studia
+
+La vitrine professionnelle du projet se trouve dans [`vitrine/`](vitrine/) : présentation
+éditoriale en français, animations adaptées aux préférences de mouvement, mise en page
+responsive et démo interactive fictive du planning, des révisions et des quiz. Elle est
+indépendante de l'application et des maquettes, sans connexion au backend ni clé API.
+
+```bash
+cd vitrine
+npm start                    # aperçu sur le port 4173
+# Tests : npm ci && npm test
+```
+
+Pour le fonctionnement, les tests et le déploiement statique, voir le
+[README de la vitrine](vitrine/README.md). Le site présente honnêtement Studia comme
+un projet Android en développement, sans lien de téléchargement public inventé.

@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#f6f7f2" />
+    <meta
+      name="description"
+      content="Studia, le compagnon Android des étudiants L2 SIR. Transformez votre emploi du temps PDF en planning clair, organisez vos révisions et explorez vos cours avec des quiz par section."
+    />
+    <meta
+      property="og:title"
+      content="Studia — Tes études, l’esprit plus léger."
+    />
+    <meta
+      property="og:description"
+      content="Un planning clair. Des révisions au bon moment. De la place pour tout le reste. Découvrez le projet étudiant Studia."
+    />
+    <meta property="og:type" content="website" />
+    <title>Studia — Tes études, l’esprit plus léger.</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="assets/fonts/manrope.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
+    <svg
+      class="icon-library"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        <symbol id="i-arrow" viewBox="0 0 24 24">
+          <path d="M5 12h14m-6-6 6 6-6 6" />
+        </symbol>
+        <symbol id="i-up-right" viewBox="0 0 24 24">
+          <path d="M6 18 18 6M6 6h12v12" />
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24">
+          <path d="m5 12 4 4L19 6" />
+        </symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24">
+          <rect x="3" y="5" width="18" height="16" rx="3" />
+          <path d="M7 3v4m10-4v4M3 11h18m-14 4h2m6 0h2m-10 3h2" />
+        </symbol>
+        <symbol id="i-book" viewBox="0 0 24 24">
+          <path
+            d="M12 5v16m0-16C8 2 5 3 2 4v15c4-1 7-1 10 2 3-3 6-3 10-2V4c-3-1-6-2-10 1Z"
+          />
+        </symbol>
+        <symbol id="i-spark" viewBox="0 0 24 24">
+          <path
+            d="m12 3 2.6 6.4L21 12l-6.4 2.6L12 21l-2.6-6.4L3 12l6.4-2.6L12 3Z"
+          />
+        </symbol>
+        <symbol id="i-bell" viewBox="0 0 24 24">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" />
+        </symbol>
+        <symbol id="i-file" viewBox="0 0 24 24">
+          <path
+            d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10l-7-7Z"
+          />
+          <path d="M13 3v7h7M8 14h8m-8 3h5" />
+        </symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </symbol>
+        <symbol id="i-play" viewBox="0 0 24 24">
+          <path d="m9 5 11 7-11 7V5Z" />
+        </symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24">
+          <path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z" />
+          <path d="m8 12 3 3 5-6" />
+        </symbol>
+        <symbol id="i-wifi" viewBox="0 0 24 24">
+          <path
+            d="M2 8c6-5 14-5 20 0M6 12c4-3 8-3 12 0m-8 4c1.3-1 2.7-1 4 0M12 20h.01M3 3l18 18"
+          />
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 24 24">
+          <path d="m6 6 12 12M6 18 18 6" />
+        </symbol>
+        <symbol id="i-menu" viewBox="0 0 24 24">
+          <path d="M4 8h16M4 16h16" />
+        </symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24">
+          <path d="M5 12h14M12 5v14" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <header class="site-header">
+      <div class="container nav-wrap">
+        <a class="wordmark" href="#" aria-label="Studia, accueil"
+          ><span class="brand-mark"
+            ><svg><use href="#i-book" /></svg><i></i></span
+          >studia<span class="logo-dot">.</span></a
+        >
+        <nav id="main-nav" aria-label="Navigation principale">
+          <a href="#experience">L’expérience</a
+          ><a href="#methode">Comment ça marche</a
+          ><a href="#questions">Questions fréquentes</a>
+        </nav>
+        <a class="button button-small button-dark nav-cta" href="#decouvrir"
+          >Découvrir Studia <svg><use href="#i-up-right" /></svg
+        ></a>
+        <button
+          class="menu-toggle icon-button"
+          aria-label="Ouvrir le menu"
+          aria-expanded="false"
+          aria-controls="main-nav"
+        >
+          <svg><use href="#i-menu" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="contenu">
+      <section class="hero container" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="eyebrow hero-eyebrow">
+            <span class="status-dot"></span> LE COMPAGNON DES ÉTUDIANTS L2 SIR
+          </div>
+          <h1 id="hero-title">
+            Tes études,<br />l’esprit
+            <span class="serif hero-serif"
+              >plus léger.<svg
+                class="underline"
+                viewBox="0 0 410 20"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 12C110 0 240 0 402 9M57 18C160 8 280 7 367 14"
+                /></svg
+            ></span>
+          </h1>
+          <p class="hero-description">
+            Le planning qui s’organise. Les révisions qui avancent.<br
+              class="desktop-break"
+            />
+            Et enfin, de la place pour tout le reste.
+          </p>
+          <div class="hero-actions">
+            <a href="#experience" class="button button-dark"
+              >Trouver mon rythme <svg><use href="#i-arrow" /></svg></a
+            ><button class="text-button" data-open-demo>
+              <span class="play-circle"
+                ><svg><use href="#i-play" /></svg></span
+              >Voir Studia en action
+            </button>
+          </div>
+          <div class="hero-note">
+            <span class="android-icon" aria-hidden="true"
+              ><svg viewBox="0 0 24 24">
+                <path d="m7 4-2-3m12 3 2-3M3 12a9 9 0 0 1 18 0v7H3Z" />
+                <path d="M7 8h.01M17 8h.01" /></svg></span
+            ><span>Pensé pour Android</span><i></i
+            ><span>Conçu pour ton quotidien</span>
+          </div>
+          <div class="handwritten hero-annotation">
+            Un peu d’ordre. Beaucoup d’élan.<svg
+              viewBox="0 0 65 45"
+              aria-hidden="true"
+            >
+              <path d="M2 34C33 48 61 31 51 5m-9 6 9-7 10 7" />
+            </svg>
+          </div>
+        </div>
+        <div class="hero-art" aria-label="Aperçu fictif du planning Studia">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <span class="art-plus plus-one">✳</span
+          ><span class="art-plus plus-two">+</span>
+          <div class="floating-file">
+            <span class="file-icon"
+              ><svg><use href="#i-file" /></svg
+            ></span>
+            <div>
+              <b>emploi_du_temps.pdf</b
+              ><span>Un PDF. Et tout devient clair.</span>
+            </div>
+            <span class="round-check"
+              ><svg><use href="#i-check" /></svg
+            ></span>
+          </div>
+          <div class="planner-window">
+            <div class="window-top">
+              <span><i></i><i></i><i></i></span><b>Mon espace Studia</b
+              ><svg><use href="#i-spark" /></svg>
+            </div>
+            <div class="planner-layout">
+              <aside class="planner-sidebar">
+                <span class="sidebar-logo">s<span>.</span></span
+                ><span class="sidebar-item active"
+                  ><svg><use href="#i-calendar" /></svg></span
+                ><span class="sidebar-item"
+                  ><svg><use href="#i-book" /></svg></span
+                ><span class="sidebar-item"
+                  ><svg><use href="#i-spark" /></svg></span
+                ><span class="sidebar-bottom">L2</span>
+              </aside>
+              <div class="planner-content">
+                <div class="planner-heading">
+                  <div>
+                    <span class="tiny-label">ON PREND LE BON RYTHME</span>
+                    <h3>Une semaine bien à toi.</h3>
+                  </div>
+                  <span class="small-avatar">S</span>
+                </div>
+                <div class="week-title">
+                  <b>12 – 18 octobre</b><span>EXEMPLE L2 SIR</span>
+                </div>
+                <div class="mini-week">
+                  <div class="time-labels">
+                    <span></span><span>08:00</span><span>10:00</span
+                    ><span>14:00</span><span>16:00</span>
+                  </div>
+                  <div class="week-column">
+                    <div class="week-day">LUN <b>12</b></div>
+                    <div class="calendar-event event-green">
+                      <b>Algorithmique</b><span>08:00 · Salle B12</span>
+                    </div>
+                    <div class="calendar-event event-pale">
+                      <b>Un moment à soi</b
+                      ><span>Respirer, c’est aussi avancer.</span>
+                    </div>
+                  </div>
+                  <div class="week-column">
+                    <div class="week-day selected">MAR <b>13</b></div>
+                    <div class="calendar-event event-orange">
+                      <b>Réseaux</b><span>08:00 · Salle A04</span>
+                    </div>
+                    <div class="calendar-event event-lilac">
+                      <b>Mathématiques</b><span>14:00 · Salle B12</span>
+                    </div>
+                  </div>
+                  <div class="week-column">
+                    <div class="week-day">MER <b>14</b></div>
+                    <div class="calendar-event event-pale empty-slot">
+                      <svg><use href="#i-spark" /></svg>
+                    </div>
+                    <div class="calendar-event event-green">
+                      <b>Révisions</b><span>50 min pour progresser</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-preview">
+            <div class="phone-camera"></div>
+            <div class="phone-topline"><b>9:41</b><span>▮▮▮ ▰</span></div>
+            <div class="phone-greeting">
+              <span>MARDI 13 OCTOBRE</span>
+              <h3>Salut, toi <span>☀</span></h3>
+              <p>Chaque petit pas compte.</p>
+            </div>
+            <div class="phone-week" aria-label="Choisir un jour dans l’aperçu">
+              <button data-hero-day="0" aria-pressed="false">L<b>12</b></button
+              ><button data-hero-day="1" class="active" aria-pressed="true">
+                M<b>13</b></button
+              ><button data-hero-day="2" aria-pressed="false">M<b>14</b></button
+              ><button data-hero-day="3" aria-pressed="false">J<b>15</b></button
+              ><button data-hero-day="4" aria-pressed="false">
+                V<b>16</b>
+              </button>
+            </div>
+            <div class="phone-section-label">
+              LE PROGRAMME DU JOUR <span>↗</span>
+            </div>
+            <div class="phone-course" id="hero-course">
+              <span class="course-time">08:00 — 10:00</span>
+              <h4>Réseaux informatiques</h4>
+              <span class="course-room">Salle A04 · L2 SIR</span>
+              <div class="course-bottom">
+                <span class="mini-avatars"><i>A</i><i>M</i><i>S</i></span
+                ><span>On se retrouve en cours.</span>
+              </div>
+            </div>
+            <div class="phone-revision">
+              <span class="revision-icon"
+                ><svg><use href="#i-spark" /></svg
+              ></span>
+              <div>
+                <b>Un créneau pour progresser</b
+                ><span>Révisions · 20:00 – 20:50</span>
+              </div>
+              <svg><use href="#i-arrow" /></svg>
+            </div>
+            <div class="phone-bottom">
+              <svg><use href="#i-calendar" /></svg
+              ><svg><use href="#i-book" /></svg
+              ><svg><use href="#i-spark" /></svg>
+            </div>
+          </div>
+          <div class="floating-notification">
+            <span class="notification-icon"
+              ><svg><use href="#i-bell" /></svg
+            ></span>
+            <div>
+              <b>Une longueur d’avance.</b
+              ><span>Ton cours commence dans 1 heure.</span>
+            </div>
+            <span class="notification-now">maintenant</span>
+          </div>
+          <span class="art-caption"
+            ><span></span> APERÇU FICTIF · UNE SEMAINE EN PLUS SIMPLE.</span
+          >
+        </div>
+      </section>
+
+      <div class="benefits-strip">
+        <div class="container benefits-inner">
+          <span
+            >MOINS DE CHARGE MENTALE.<br /><b>PLUS DE PLACE POUR TOI.</b></span
+          >
+          <div>
+            <svg><use href="#i-calendar" /></svg>Un planning clair
+          </div>
+          <div>
+            <svg><use href="#i-bell" /></svg>Les bons rappels
+          </div>
+          <div>
+            <svg><use href="#i-spark" /></svg>Des révisions ciblées
+          </div>
+          <div>
+            <svg><use href="#i-shield" /></svg>Ton espace, tes données
+          </div>
+        </div>
+      </div>
+
+      <section
+        class="section container experience"
+        id="experience"
+        aria-labelledby="experience-title"
+      >
+        <div class="section-heading reveal">
+          <div>
+            <span class="eyebrow">01 / UNE NOUVELLE FAÇON D’AVANCER</span>
+            <h2>
+              Tout ce qu’il te faut.<br /><span class="serif"
+                >Rien qui te disperse.</span
+              >
+            </h2>
+          </div>
+          <p>
+            Entre les cours, les PDF et les révisions,<br />tu as déjà assez à
+            penser.<br />Studia remet chaque chose à sa place.
+          </p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card planning-feature reveal">
+            <div class="feature-copy">
+              <span class="feature-icon"
+                ><svg><use href="#i-calendar" /></svg
+              ></span>
+              <h3>Du PDF au « c’est clair ».</h3>
+              <p>
+                Importe ton emploi du temps, vérifie les cours et retrouve ta
+                semaine dans un planning lisible. Fini le zoom sur un PDF à 7 h
+                du matin.
+              </p>
+              <span class="feature-tag">TON PLANNING, MÊME HORS LIGNE</span>
+            </div>
+            <div class="planning-illustration" aria-hidden="true">
+              <div class="paper">
+                <span class="paper-label">EMPLOI DU TEMPS</span
+                ><span class="paper-sub">L2 SIR · Semaine 42</span>
+                <div class="paper-grid"></div>
+                <span class="pdf-badge">PDF</span>
+              </div>
+              <span class="transform-arrow"
+                ><svg><use href="#i-arrow" /></svg
+              ></span>
+              <div class="clean-planning">
+                <div class="clean-heading">
+                  <svg><use href="#i-calendar" /></svg
+                  ><b>Ta semaine est prête.</b><span>✓</span>
+                </div>
+                <div>
+                  <i class="mini-dot green"></i
+                  ><span
+                    ><b>Algorithmique</b
+                    ><small>Lundi · 08:00 — 10:00</small></span
+                  >
+                </div>
+                <div>
+                  <i class="mini-dot orange"></i
+                  ><span
+                    ><b>Réseaux informatiques</b
+                    ><small>Mardi · 08:00 — 10:00</small></span
+                  >
+                </div>
+                <div>
+                  <i class="mini-dot lilac"></i
+                  ><span
+                    ><b>Mathématiques</b
+                    ><small>Mardi · 14:00 — 16:00</small></span
+                  >
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="feature-card revisions-feature reveal">
+            <span class="feature-icon"
+              ><svg><use href="#i-clock" /></svg
+            ></span>
+            <h3>Un rythme qui te ressemble.</h3>
+            <p>
+              Des séances dans les moments libres, sans collision avec tes
+              cours. Et des rappels pour garder le cap.
+            </p>
+            <div class="revision-illustration">
+              <div class="revision-line"><span>19:00</span><i></i></div>
+              <div class="revision-block">
+                <svg><use href="#i-spark" /></svg>
+                <div>
+                  <b>Un petit pas ce soir.</b
+                  ><span>Algorithmique · 50 min</span>
+                </div>
+                <span class="check-circle">✓</span>
+              </div>
+              <div class="revision-line"><span>21:00</span><i></i></div>
+            </div>
+            <span class="feature-tag">PROGRESSER SANS TOUT BOUSCULER</span>
+          </article>
+          <article class="feature-card quiz-feature reveal">
+            <span class="feature-icon"
+              ><svg><use href="#i-book" /></svg
+            ></span>
+            <h3>Ne relis pas. Comprends.</h3>
+            <p>
+              Transforme ton support en quiz, une section à la fois. Une
+              explication et une référence de page pour chaque réponse.
+            </p>
+            <div class="quiz-illustration">
+              <span
+                ><svg><use href="#i-spark" /></svg> LE DÉCLIC DU JOUR</span
+              ><b>Une question. Un pas de plus.</b>
+              <div>
+                <span class="answer-letter">B</span
+                ><span>J’ai compris, pas juste retenu.</span
+                ><svg><use href="#i-check" /></svg>
+              </div>
+            </div>
+            <span class="feature-tag">QUIZ IA · GÉNÉRATION AVEC QUOTAS</span>
+          </article>
+        </div>
+      </section>
+
+      <section
+        class="method-section"
+        id="methode"
+        aria-labelledby="method-title"
+      >
+        <div class="container method-inner">
+          <div class="method-copy reveal">
+            <span class="eyebrow">02 / SIMPLE DÈS LE PREMIER JOUR</span>
+            <h2>
+              Trois petits pas.<br /><span class="serif"
+                >Un grand souffle.</span
+              >
+            </h2>
+            <p>
+              Pas besoin d’une nouvelle méthode compliquée.<br />Juste de ton
+              emploi du temps et de toi.
+            </p>
+            <div
+              class="step-tabs"
+              role="tablist"
+              aria-label="Les étapes Studia"
+              aria-orientation="vertical"
+            >
+              <button
+                class="step active"
+                id="step-0"
+                role="tab"
+                aria-selected="true"
+                aria-controls="step-panel"
+                data-step="0"
+              >
+                <span class="step-number">01</span
+                ><span
+                  ><b>Tu importes.</b
+                  ><small
+                    >Ton emploi du temps PDF, tout simplement.</small
+                  ></span
+                ><svg><use href="#i-up-right" /></svg></button
+              ><button
+                class="step"
+                id="step-1"
+                role="tab"
+                aria-selected="false"
+                aria-controls="step-panel"
+                tabindex="-1"
+                data-step="1"
+              >
+                <span class="step-number">02</span
+                ><span
+                  ><b>Tu ajustes.</b
+                  ><small>Vérifie, corrige et garde la main.</small></span
+                ><svg><use href="#i-up-right" /></svg></button
+              ><button
+                class="step"
+                id="step-2"
+                role="tab"
+                aria-selected="false"
+                aria-controls="step-panel"
+                tabindex="-1"
+                data-step="2"
+              >
+                <span class="step-number">03</span
+                ><span
+                  ><b>Tu prends ton élan.</b
+                  ><small>Ton planning est prêt. À toi de jouer.</small></span
+                ><svg><use href="#i-up-right" /></svg>
+              </button>
+            </div>
+          </div>
+          <div class="method-visual reveal">
+            <span class="method-spark" aria-hidden="true">✳</span>
+            <div
+              class="step-preview"
+              id="step-panel"
+              role="tabpanel"
+              aria-labelledby="step-0"
+              tabindex="0"
+            ></div>
+            <p class="method-caption">
+              <span class="status-dot"></span> Tu décides. Studia t’accompagne.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="section container manifesto"
+        aria-labelledby="manifesto-title"
+      >
+        <div class="manifesto-mark reveal" aria-hidden="true">
+          <svg><use href="#i-spark" /></svg>
+        </div>
+        <span class="eyebrow reveal">LA TECHNOLOGIE À LA BONNE PLACE</span>
+        <h2 class="reveal" id="manifesto-title">
+          Tes études prennent du temps.<br />Elles ne devraient pas prendre<br /><span
+            class="serif"
+            >toute la place.</span
+          >
+        </h2>
+        <p class="reveal">
+          Studia n’étudie pas à ta place. Il t’aide à mieux t’organiser,<br />à
+          comprendre tes cours et à avancer à ton rythme.
+        </p>
+        <div class="trust-notes reveal">
+          <div>
+            <svg><use href="#i-wifi" /></svg><b>Ton planning, partout</b
+            ><span>Consultable hors ligne après validation.</span>
+          </div>
+          <div>
+            <svg><use href="#i-shield" /></svg><b>Le local d’abord</b
+            ><span>Planning et révisions sur ton téléphone.</span>
+          </div>
+          <div>
+            <svg><use href="#i-book" /></svg><b>Fait pour L2 SIR</b
+            ><span>Un périmètre précis. Un projet concret.</span>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="faq-section container"
+        id="questions"
+        aria-labelledby="faq-title"
+      >
+        <div class="faq-intro reveal">
+          <span class="eyebrow">03 / ON T’EXPLIQUE</span>
+          <h2>Les bonnes<br /><span class="serif">questions.</span></h2>
+          <p>Un peu de clarté avant<br />de se lancer.</p>
+          <span class="faq-doodle" aria-hidden="true">?</span>
+        </div>
+        <div class="faq-list reveal">
+          <details open>
+            <summary>
+              Studia, c’est pour qui ?<span
+                ><svg><use href="#i-plus" /></svg
+              ></span>
+            </summary>
+            <p>
+              Le projet est conçu pour les étudiants de L2 SIR. Ce périmètre
+              permet de travailler sur des emplois du temps concrets et un
+              parcours adapté, plutôt que de promettre une solution universelle.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Est-ce que l’application est déjà disponible ?<span
+                ><svg><use href="#i-plus" /></svg
+              ></span>
+            </summary>
+            <p>
+              Studia est un projet en développement pour Android. Il n’y a pas
+              encore de téléchargement public ni de publication sur un store. Tu
+              peux explorer la démo de cette page et suivre le code et la
+              documentation du projet.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Est-ce que Studia fonctionne sans Internet ?<span
+                ><svg><use href="#i-plus" /></svg
+              ></span>
+            </summary>
+            <p>
+              Oui, pour consulter ton planning validé, organiser tes révisions
+              locales et recevoir les rappels Android. L’import d’un PDF,
+              l’activation d’un accès et la génération de nouveaux quiz
+              demandent une connexion au serveur.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Quels PDF puis-je importer ?<span
+                ><svg><use href="#i-plus" /></svg
+              ></span>
+            </summary>
+            <p>
+              Des PDF contenant du texte sélectionnable : 10 Mo maximum, jusqu’à
+              20 pages pour le planning et 30 pour un support de cours. Les
+              scans nécessitant un OCR ne sont pas pris en charge. Les cours
+              extraits restent à vérifier avant validation.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Comment fonctionne l’accès aux quiz IA ?<span
+                ><svg><use href="#i-plus" /></svg
+              ></span>
+            </summary>
+            <p>
+              L’accès est piloté par le serveur : soit directement ouvert, soit
+              activé depuis l’espace étudiant. Des quotas journaliers et
+              mensuels encadrent la génération dans les deux cas. Les questions
+              se génèrent section par section, à partir du texte de ton support.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Où sont conservées mes données ?<span
+                ><svg><use href="#i-plus" /></svg
+              ></span>
+            </summary>
+            <p>
+              Ton planning et tes révisions sont enregistrés localement sur ton
+              téléphone. Les supports et la progression des quiz sont aussi
+              traités et stockés côté serveur. Le texte nécessaire à la
+              génération est envoyé au service IA, pas le PDF brut. La démo de
+              ce site utilise seulement des données fictives, sans compte ni
+              envoi de document.
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <section class="closing container" id="decouvrir">
+        <div class="closing-card reveal">
+          <span class="closing-orbit" aria-hidden="true"></span>
+          <div>
+            <span class="eyebrow"
+              ><span class="status-dot"></span> CHAQUE SEMAINE EST UN NOUVEAU
+              DÉPART.</span
+            >
+            <h2>
+              Et si tu trouvais<br /><span class="serif">ton rythme ?</span>
+            </h2>
+            <p>
+              Commence par découvrir ce que pourrait être<br />ton quotidien
+              avec Studia.
+            </p>
+            <button class="button button-dark" data-open-demo>
+              Explorer la démo <svg><use href="#i-up-right" /></svg></button
+            ><span class="closing-note"
+              >Sans compte. Sans téléchargement. Juste un aperçu.</span
+            >
+          </div>
+          <div class="closing-art" aria-hidden="true">
+            <div class="book-cover">
+              <svg><use href="#i-spark" /></svg
+              ><span
+                >Un peu<br />plus clair.<br /><i
+                  >Un peu<br />plus loin.</i
+                ></span
+              ><b>studia.</b>
+            </div>
+            <span class="closing-sticker">À TON<br />RYTHME ☀</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="container site-footer">
+      <div class="footer-top">
+        <a class="wordmark" href="#" aria-label="Studia, retour en haut"
+          ><span class="brand-mark"
+            ><svg><use href="#i-book" /></svg><i></i></span
+          >studia<span class="logo-dot">.</span></a
+        ><span>Moins de chaos. Plus de déclics.</span
+        ><a
+          href="https://github.com/NockiProgramTECH/StudentPlanning"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Le projet sur GitHub <svg><use href="#i-up-right" /></svg
+        ></a>
+      </div>
+      <div class="footer-bottom">
+        <span>© <span id="year">2026</span> Studia · Pensé pour avancer.</span
+        ><span class="footer-status"
+          ><span class="status-dot"></span> Projet Android en développement · L2
+          SIR</span
+        ><button class="footer-link" data-open-privacy>
+          À propos de tes données
+        </button>
+      </div>
+    </footer>
+
+    <dialog id="demo-dialog" aria-labelledby="demo-title">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">BIENVENUE DANS TON APERÇU</span>
+          <h2 id="demo-title">Un avant-goût de Studia<span>.</span></h2>
+        </div>
+        <button class="icon-button close-dialog" aria-label="Fermer la démo">
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <p class="demo-disclaimer">
+        Données fictives · Rien n’est envoyé ni enregistré. Ce n’est pas
+        l’application Android.
+      </p>
+      <div class="demo-tabs" role="tablist" aria-label="Parcours de la démo">
+        <button
+          role="tab"
+          id="demo-tab-planning"
+          aria-controls="demo-panel"
+          aria-selected="true"
+          data-demo-tab="planning"
+        >
+          <svg><use href="#i-calendar" /></svg>Mon planning</button
+        ><button
+          role="tab"
+          id="demo-tab-revisions"
+          aria-controls="demo-panel"
+          aria-selected="false"
+          tabindex="-1"
+          data-demo-tab="revisions"
+        >
+          <svg><use href="#i-clock" /></svg>Mes révisions</button
+        ><button
+          role="tab"
+          id="demo-tab-quiz"
+          aria-controls="demo-panel"
+          aria-selected="false"
+          tabindex="-1"
+          data-demo-tab="quiz"
+        >
+          <svg><use href="#i-spark" /></svg>Mon quiz
+        </button>
+      </div>
+      <div
+        id="demo-panel"
+        role="tabpanel"
+        aria-labelledby="demo-tab-planning"
+        tabindex="0"
+      ></div>
+      <div class="demo-bottom">
+        <span>Petit pas après petit pas.</span
+        ><a
+          href="https://github.com/NockiProgramTECH/StudentPlanning"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Suivre le projet <svg><use href="#i-up-right" /></svg
+        ></a>
+      </div>
+    </dialog>
+    <dialog id="privacy-dialog" aria-labelledby="privacy-title">
+      <div class="dialog-header">
+        <h2 id="privacy-title">Tes données sur ce site.</h2>
+        <button class="icon-button close-dialog" aria-label="Fermer">
+          <svg><use href="#i-close" /></svg>
+        </button>
+      </div>
+      <div class="privacy-content">
+        <p>
+          Cette vitrine ne propose ni formulaire d’inscription, ni traceur
+          publicitaire, ni outil d’analyse d’audience. Les polices et les
+          ressources sont hébergées avec le site.
+        </p>
+        <p>
+          La démo fonctionne dans la mémoire de ton navigateur avec des données
+          fictives. Elle n’envoie aucun document et se réinitialise à chaque
+          ouverture.
+        </p>
+        <p>
+          Comme pour tout site, l’hébergeur peut traiter des journaux techniques
+          de connexion. Les liens externes ouvrent des services disposant de
+          leurs propres règles de confidentialité.
+        </p>
+        <p>
+          Ces informations concernent la vitrine. Le traitement des supports de
+          cours dans l’application est décrit dans la documentation du projet.
+        </p>
+      </div>
+    </dialog>
+  </body>
+</html>
