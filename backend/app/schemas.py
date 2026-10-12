@@ -186,3 +186,22 @@ class LicenseActivationResponse(BaseModel):
     quota: QuotaStatus
 
 
+class FeedbackCreateRequest(BaseModel):
+    feedback_type: str = Field(default="suggestion", max_length=50)
+    category: str = Field(default="autre", max_length=50)
+    title: str = Field(min_length=2, max_length=200)
+    description: str = Field(min_length=5, max_length=5000)
+    device_context: str | None = Field(default=None, max_length=200)
+
+
+class FeedbackResponse(BaseModel):
+    id: int
+    feedback_type: str
+    category: str
+    title: str
+    description: str
+    device_context: str | None = None
+    created_at: str
+
+
+

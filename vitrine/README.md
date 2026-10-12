@@ -86,14 +86,15 @@ Pas d'appel réseau automatique ni de clé GitHub côté site.
 La vitrine intègre une section interactive dédiée permettant de :
 - **Demander une suggestion pour l'application** : proposer une nouvelle fonctionnalité (export agenda iCal/Google, widget Android, mode sombre, partage promo, etc.) avec labels et modèles adaptés.
 - **Faire un retour d'expérience** : signaler un bug, une difficulté de lecture PDF ou un retour sur l'ergonomie.
+- **Enregistrement direct en base de données** : un bouton de soumission permet d'enregistrer instantanément le retour ou la suggestion dans la base de données de Studia (`POST /api/feedbacks`, stocké dans la table `feedbacks_and_suggestions` sous SQLite ou PostgreSQL) avec confirmation et numéro de référence.
 - **Pré-remplissage rapide** : des suggestions populaires et cas types sont directement cliquables pour inspirer et faciliter la saisie.
-- **Canaux de partage adaptés** :
+- **Canaux de partage complémentaires** :
   - Création directe d'une issue GitHub avec gabarit structuré.
   - Préparation d'un message `mailto` pour les étudiants sans compte GitHub.
   - Copie instantanée du message formaté dans le presse-papier.
 - **Roadmap participative** : aperçu des idées étudiantes actuellement en cours d'étude, prévues ou en développement.
 
-Le message et la page avertissent de ne pas y déposer de code, e-mail personnel ni document étudiant non anonymisé. Aucune collecte cachée de données.
+Le message et la page avertissent de ne pas y déposer de code, e-mail personnel ni document étudiant non anonymisé. Aucune collecte de données personnelles superflues.
 
 La procédure pour préparer l'APK et organiser une semaine d'essai est décrite dans
 [`docs/BETA_ET_RETOURS.md`](../docs/BETA_ET_RETOURS.md). Le bouton ne construit pas l'APK et

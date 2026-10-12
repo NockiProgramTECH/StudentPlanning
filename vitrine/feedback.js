@@ -18,10 +18,12 @@
   const descLabel = document.querySelector("#feedback-desc-label");
   const quickIdeasList = document.querySelector("#quick-ideas-list");
   const quickIdeasBox = document.querySelector("#quick-ideas-box");
+  const btnSubmitDb = document.querySelector("#btn-submit-db");
   const btnGithub = document.querySelector("#btn-github-issue");
   const btnEmail = document.querySelector("#btn-email-feedback");
   const btnCopy = document.querySelector("#btn-copy-feedback");
   const statusMsg = document.querySelector("#feedback-status-msg");
+  const communityList = document.querySelector(".community-ideas-list");
 
   let currentType = "suggestion";
 
@@ -105,6 +107,7 @@
       descLabel: "Description de la fonctionnalité souhaitée",
       descPlaceholder: "Explique ce que tu aimerais voir dans l’application et en quoi cela t’aiderait pendant tes études…",
       githubPrefix: "[Suggestion]",
+      btnSubmitLabel: "Enregistrer la suggestion en base",
       emailSubject: "Suggestion de fonctionnalité pour Studia",
       quickLabel: "Suggestions populaires (clique pour pré-remplir) :",
     },
@@ -114,6 +117,7 @@
       descLabel: "Description détaillée de ton retour",
       descPlaceholder: "Décris ce qui s’est passé, le résultat attendu, ou ton avis général sur l’application…",
       githubPrefix: "[Retour]",
+      btnSubmitLabel: "Enregistrer le retour en base",
       emailSubject: "Retour d’expérience Studia",
       quickLabel: "Exemples de retours fréquents (clique pour pré-remplir) :",
     },
@@ -174,6 +178,10 @@
     if (titleInput) titleInput.placeholder = config.subjectPlaceholder;
     if (descLabel) descLabel.textContent = config.descLabel;
     if (descInput) descInput.placeholder = config.descPlaceholder;
+    if (btnSubmitDb) {
+      const span = btnSubmitDb.querySelector("span");
+      if (span) span.textContent = config.btnSubmitLabel;
+    }
 
     if (quickIdeasBox) {
       const label = quickIdeasBox.querySelector(".quick-ideas-label-text");
@@ -249,6 +257,47 @@
     statusMsg.className = `feedback-status-msg ${isSuccess ? "success" : "info"}`;
   }
 
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  async function loadRecentFeedbacks() {
+    if (!communityList) return;
+    try {
+      const res = await fetch("/api/feedbacks?limit=4", {
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) return;
+
+      // Ajouter en tête de liste les retours enregistrés
+      data.slice(0, 3).forEach((item) => {
+        const existing = communityList.querySelector(`[data-id="${item.id}"]`);
+        if (existing) return;
+
+        const li = document.createElement("li");
+        li.setAttribute("data-id", String(item.id));
+        const isSugg = item.feedback_type === "suggestion";
+        li.innerHTML = `
+          <span class="idea-tag ${isSugg ? "status-planned" : "status-review"}">${isSugg ? "Idée reçue" : "Retour reçu"}</span>
+          <div class="idea-content">
+            <b>${escapeHtml(item.title)}</b>
+            <p>${escapeHtml(item.description.slice(0, 110))}${item.description.length > 110 ? "…" : ""}</p>
+          </div>
+        `;
+        communityList.insertBefore(li, communityList.firstChild);
+      });
+    } catch (_) {
+      // Ignorer si l'API backend n'est pas joignable (mode statique isolé)
+    }
+  }
+
   if (tabSuggestion) {
     tabSuggestion.addEventListener("click", () => setType("suggestion"));
   }
@@ -303,11 +352,73 @@
     });
   }
 
-  form.addEventListener("submit", (e) => {
+  // Soumission pour enregistrement direct en base de données
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (btnGithub) btnGithub.click();
+    const rawTitle = titleInput ? titleInput.value.trim() : "";
+    const rawDesc = descInput ? descInput.value.trim() : "";
+    if (!rawTitle || !rawDesc) {
+      showStatus("Merci de compléter le titre et la description avant d’enregistrer.", false);
+      if (!rawTitle && titleInput) titleInput.focus();
+      else if (descInput) descInput.focus();
+      return;
+    }
+
+    if (btnSubmitDb) {
+      btnSubmitDb.disabled = true;
+      btnSubmitDb.setAttribute("aria-busy", "true");
+    }
+    showStatus("Enregistrement en cours dans la base de données…", true);
+
+    const payload = {
+      feedback_type: currentType,
+      category: categoryInput ? categoryInput.value : "autre",
+      title: rawTitle,
+      description: rawDesc,
+      device_context: (contextInput ? contextInput.value.trim() : "") || null,
+    };
+
+    try {
+      const response = await fetch("/api/feedbacks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const created = await response.json();
+      const refText = created && created.id ? ` (Réf #${created.id})` : "";
+      showStatus(
+        `✓ Merci ! Ta ${currentType === "suggestion" ? "suggestion" : "remarque"} a été enregistrée directement en base de données${refText}.`,
+        true,
+      );
+
+      // Réinitialiser les champs
+      if (titleInput) titleInput.value = "";
+      if (descInput) descInput.value = "";
+      if (contextInput) contextInput.value = "";
+      updateLinks();
+      loadRecentFeedbacks();
+    } catch (err) {
+      // Fallback gracieux si l'API backend n'est pas connectée sur ce serveur (ex: aperçu HTTP statique)
+      showStatus(
+        `✓ Formulaire validé ! (Note : l’API de base de données est indisponible hors serveur backend, tu peux transmettre via GitHub ou E-mail ci-dessous).`,
+        true,
+      );
+    } finally {
+      if (btnSubmitDb) {
+        btnSubmitDb.disabled = false;
+        btnSubmitDb.removeAttribute("aria-busy");
+      }
+    }
   });
 
-  // Initialisation
+  // Initialisation sans requête réseau au chargement
   setType("suggestion");
 })();

@@ -378,7 +378,7 @@ test("feedback is a real prefilled issue with public-data warning, not a fake fo
   dom.window.close();
 });
 
-test("feedback and suggestion section toggles modes, updates inputs, and handles quick suggestions", () => {
+test("feedback and suggestion section toggles modes, updates inputs, and handles quick suggestions", async () => {
   const dom = site();
   const doc = dom.window.document;
 
@@ -458,7 +458,47 @@ test("feedback and suggestion section toggles modes, updates inputs, and handles
   assert.match(parsedSuggestionGithub.searchParams.get("title"), /Mode hors-ligne/);
   assert.match(parsedSuggestionGithub.searchParams.get("labels"), /enhancement/);
 
+  // Tester l'enregistrement direct en base de données via fetch POST /api/feedbacks
+  let apiPostPayload = null;
+  dom.window.fetch = async (url, options) => {
+    if (url === "/api/feedbacks" && options && options.method === "POST") {
+      apiPostPayload = JSON.parse(options.body);
+      return {
+        ok: true,
+        json: async () => ({
+          id: 42,
+          feedback_type: apiPostPayload.feedback_type,
+          category: apiPostPayload.category,
+          title: apiPostPayload.title,
+          description: apiPostPayload.description,
+          created_at: "2026-10-12T16:40:00Z",
+        }),
+      };
+    }
+    return { ok: true, json: async () => [] };
+  };
+
+  titleInput.value = "Widget calendrier sur écran d'accueil";
+  descInput.value = "Avoir un widget direct sur Android.";
+  click(doc, "#btn-submit-db");
+
+  await new Promise((r) => setImmediate(r));
+
+  assert.ok(apiPostPayload, "POST /api/feedbacks should have been called");
+  assert.equal(apiPostPayload.title, "Widget calendrier sur écran d'accueil");
+  assert.equal(apiPostPayload.feedback_type, "suggestion");
+  assert.match(
+    doc.querySelector("#feedback-status-msg").textContent,
+    /base de données.*#42/,
+  );
+
+  // Vérifier la réinitialisation après enregistrement en base
+  assert.equal(titleInput.value, "");
+  assert.equal(descInput.value, "");
+
   // Tester le bouton copier
+  titleInput.value = "Mode hors-ligne pour les quiz";
+  titleInput.dispatchEvent(new dom.window.Event("input"));
   let copiedText = null;
   dom.window.navigator.clipboard = {
     writeText: async (text) => {
